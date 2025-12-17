@@ -6,13 +6,14 @@
 #include "Body.h"
 
 class PhysicsEngine {
-public:
     std::vector<Body*> bodies;
     Vector2d gravity;
+public:
 
     PhysicsEngine(const Vector2d& gravity = Vector2d(0, 9.81)) : gravity(gravity) {}
     void addBody(Body* body) {bodies.push_back(body);}
-    void step(float dt);
+    void update(float dt);
+    std::vector<Body*> getBodies() const { return bodies; }
 };
 
 #endif

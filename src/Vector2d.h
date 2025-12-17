@@ -19,7 +19,7 @@ public:
 
     float dot(const Vector2d& v2) const {return x*v2.x + y*v2.y;}
     float length() const {return std::sqrt(x*x + y*y);}
-    void normalize();
+    Vector2d normalize();
 };
 
 inline Vector2d operator*(float a, const Vector2d& v){ return Vector2d(v.x * a, v.y * a); }

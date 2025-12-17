@@ -1,11 +1,13 @@
 #include "Vector2d.h"
 
-void Vector2d::normalize(){
+Vector2d Vector2d::normalize(){
     float len = length();
     if(len != 0){
         x /= len;
         y /= len;
     }
+
+    return *this;
 }
 
 std::ostream& operator<<(std::ostream& out, const Vector2d& v){
