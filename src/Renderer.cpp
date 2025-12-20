@@ -2,7 +2,7 @@
 
 void Renderer::drawCircle(const Body& body){
     sf::CircleShape shape;
-    shape.setRadius(10 * scale);
+    shape.setRadius(static_cast<CircleCollider*>(body.collider)->getRadius() * scale);
     shape.setOrigin(sf::Vector2f(shape.getRadius(), shape.getRadius()));
     shape.setPosition(sf::Vector2f(body.pos.x * scale, body.pos.y * scale));
 

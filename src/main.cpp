@@ -6,11 +6,19 @@ int main() {
     sf::RenderWindow window(sf::VideoMode({800, 600}), "Physics Engine 2D");
     window.setFramerateLimit(60);
 
-    PhysicsEngine engine;
-    engine.addBody(new Body(Vector2d(100, 100), Vector2d(100, 0), 1, 1, 10));
-    engine.addBody(new Body(Vector2d(300, 100), Vector2d(50, 0), 1, 1, -10));
+    PhysicsEngine engine({0, 0});
+    // for(int i = 0; i<100; i++){
+    //     engine.addBody(new Body({rand()%800, rand()%600}, {0,0}, 1, 0.9f, (rand()%2==0?1:-1)*50, new CircleCollider(5 + rand()%15)));
+    // }
+    for(int i = 0; i<200; i++){
+        engine.addBody(new Body({rand()%800, rand()%600}, {rand()%20, rand()%20}, 1, 1, (rand()%2==0?1:-1)*50, new CircleCollider(5 + rand()%10)));
+    }
 
-    Renderer renderer(window, 0.5f);
+    // engine.addBody(new Body({200, 200}, {10, 0}, 100, 1, 0, new CircleCollider(20)));
+    // engine.addBody(new Body({600, 200}, {0, 0}, 1, 1, 0, new CircleCollider(20)));
+
+
+    Renderer renderer(window, 1);
 
     while(window.isOpen()){
         while (const std::optional event = window.pollEvent())
