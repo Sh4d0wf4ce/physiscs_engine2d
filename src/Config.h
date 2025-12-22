@@ -1,0 +1,23 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+#include <SFML/Graphics.hpp>
+
+struct Config
+{
+    static constexpr int WINDOW_WIDTH = 800;
+    static constexpr int WINDOW_HEIGHT = 600;
+    static constexpr float SCALE = 1.0f;
+
+    static inline bool useGravity = false;
+    static inline bool useWindowCollision = false;
+
+
+    static inline const sf::Color COLOR_BACKGROUND = sf::Color::Black;
+    static inline const sf::Color COLOR_DEFAULT = sf::Color::White;
+    static inline const sf::Color COLOR_POSITIVE_CHARGE = sf::Color::Red;
+    static inline const sf::Color COLOR_NEGATIVE_CHARGE = sf::Color::Blue;
+    static inline const sf::Color COLOR_BOX = sf::Color::Green;
+};
+
+#endif
