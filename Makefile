@@ -15,13 +15,22 @@ TARGET   := $(BIN_DIR)/app.exe
 SOURCES  := $(wildcard $(SRC_DIR)/*.cpp)
 OBJECTS  := $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SOURCES))
 
+.PHONY: all clean
+
 all: $(TARGET)
 
-$(TARGET): $(OBJECTS)
+$(TARGET): $(OBJECTS) | $(BIN_DIR)
 	$(CXX) $^ -o $@ $(LIBS)
+	copy lib\SFML\bin\*.dll $(BIN_DIR)\
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+$(OBJ_DIR):
+	mkdir $(OBJ_DIR)
+
+$(BIN_DIR):
+	mkdir $(BIN_DIR)
 
 clean:
 	rm -f $(OBJ_DIR)/*.o $(TARGET)
