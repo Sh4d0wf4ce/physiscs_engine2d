@@ -9,8 +9,8 @@ struct Config
     static constexpr int WINDOW_HEIGHT = 600;
     static constexpr float SCALE = 1.0f;
 
-    static inline bool useGravity = false;
-    static inline bool useWindowCollision = false;
+    static inline bool useGravity = true;
+    static inline bool useWindowCollision = true;
 
 
     static inline const sf::Color COLOR_BACKGROUND = sf::Color::Black;

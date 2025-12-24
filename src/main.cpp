@@ -8,6 +8,14 @@ int main() {
     window.setFramerateLimit(60);
 
     PhysicsEngine engine;
+    // engine.addBody(new Body({400, 100}, {0, 0}, 1, 1, 1, new CircleCollider(20)));
+    // engine.addBody(new Body({100, 900}, {0, 0}, -1, 1, 1, new BoxCollider(400,20)));
+    //add 1000 small circle bodies
+    for(int i = 0; i < 100; i++){
+        for(int j = 0; j < 10; j++){
+            engine.addBody(new Body({50 + i * 30, 50 + j * 30}, {0, 0}, 1, 0.8f, 1, new CircleCollider(10)));
+        }
+    }
 
     Renderer renderer(window, Config::SCALE);
 
@@ -16,7 +24,7 @@ int main() {
             if(event->is<sf::Event::Closed>())window.close();
             if(event->is<sf::Event::MouseButtonPressed>()){
                 sf::Vector2 pos = sf::Mouse::getPosition(window);
-                engine.addBody(new Body({pos.x, pos.y}, {0, 0}, -1, 0.9f, 1, new BoxCollider(40,40)));
+                engine.addBody(new Body({pos.x, pos.y}, {0, 0}, 1, 1, 1, new CircleCollider(20)));
             }
         }
         

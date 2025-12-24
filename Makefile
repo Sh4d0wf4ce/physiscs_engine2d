@@ -11,6 +11,9 @@ OBJ_DIR  := obj
 BIN_DIR  := bin
 TARGET   := $(BIN_DIR)/app.exe
 
+SFML_DLL_DIR := $(SFML_PATH)/bin
+SFML_DLLS    := $(notdir $(wildcard $(SFML_DLL_DIR)/*.dll))
+BIN_DLLS     := $(addprefix $(BIN_DIR)/,$(SFML_DLLS))
 
 SOURCES  := $(wildcard $(SRC_DIR)/*.cpp)
 OBJECTS  := $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SOURCES))
@@ -19,9 +22,11 @@ OBJECTS  := $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SOURCES))
 
 all: $(TARGET)
 
-$(TARGET): $(OBJECTS) | $(BIN_DIR)
-	$(CXX) $^ -o $@ $(LIBS)
-	copy lib\SFML\bin\*.dll $(BIN_DIR)\
+$(TARGET): $(OBJECTS) $(BIN_DLLS) | $(BIN_DIR)
+	$(CXX) $(OBJECTS) -o $@ $(LIBS)
+
+$(BIN_DIR)/%.dll: $(SFML_DLL_DIR)/%.dll | $(BIN_DIR)
+	powershell -Command "if (-not (Test-Path '$(BIN_DIR)/$(@F)')) { Copy-Item '$<' '$(BIN_DIR)' }"
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@

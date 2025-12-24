@@ -17,41 +17,150 @@ void PhysicsEngine::update(float dt){
         body->update(dt);
     }
 
+    
     for(unsigned int i = 0; i < bodies.size(); i++){
         if(Config::useWindowCollision) handleWallCollision(bodies[i]);
         for(unsigned int j = i+1; j < bodies.size(); j++){
-            if(checkCollision(bodies[i], bodies[j])){
-                handleCollision(bodies[i], bodies[j]);
+            Body* b1 = bodies[i];
+            Body* b2 = bodies[j];
+
+            if(b1->getInvMass() == 0 && b2->getInvMass() == 0) continue;
+            CollisionManifold m = checkCollision(b1, b2);
+            if(m.isColliding){
+                handleCollision(b1, b2, m);
             }
         }
     }
 }
 
-void PhysicsEngine::handleCollision(Body* b1, Body* b2){
-    CircleCollider* coll1 = static_cast<CircleCollider*>(b1->collider);
-    CircleCollider* coll2 = static_cast<CircleCollider*>(b2->collider);
-
-    Vector2d dir = b2->pos - b1->pos;
-    float penetration = coll1->r + coll2->r - dir.length();
-    dir.normalize();
-    float totalInvmass = b1->getInvMass() + b2->getInvMass();   
-     
-    Vector2d corr = dir * (penetration/totalInvmass);
+void PhysicsEngine::handleCollision(Body* b1, Body* b2, const CollisionManifold& m){
+    Vector2d corr = m.normal * (m.depth/(b1->getInvMass() + b2->getInvMass()));
     b1->pos -= corr * b1->getInvMass();
     b2->pos += corr * b2->getInvMass();
 
     Vector2d relativeVel = b2->vel - b1->vel;
-    float dirV = relativeVel.dot(dir);
+    float dirV = relativeVel.dot(m.normal);
     if (dirV > 0) return;
     
     float e = std::min(b1->restitution, b2->restitution);
-    float j = -(1+e) * dirV / totalInvmass;
+    float j = -(1+e) * dirV / (b1->getInvMass() + b2->getInvMass());
 
-    Vector2d impulse = dir * j;
+    Vector2d impulse = m.normal * j;
 
     b1->vel -= impulse * b1->getInvMass();
     b2->vel += impulse * b2->getInvMass();
 }
+
+CollisionManifold PhysicsEngine::checkCollision(Body* b1, Body* b2){
+    ShapeType type1 = b1->collider->shapeType;
+    ShapeType type2 = b2->collider->shapeType;
+    
+    if(type1 == CIRCLE && type2 == CIRCLE){
+        return interesectCircleCircle(b1, b2);
+    }else if((type1 == BOX && type2 == CIRCLE) || (type1 == CIRCLE && type2 == BOX)){
+        Body* box;
+        Body* circle;
+        
+        if(b1->collider->shapeType == BOX){
+            box = b1;
+            circle = b2;
+        }else{
+            box = b2;
+            circle = b1;
+        }
+
+        return interesectCircleBox(circle, box);
+    }else if(type1 == BOX && type2 == BOX){
+        return intersectBoxBox(b1, b2);
+    }
+
+    return CollisionManifold{false, Vector2d(0,0), 0};
+}
+
+CollisionManifold PhysicsEngine::interesectCircleCircle(Body* b1, Body* b2){
+    CircleCollider* coll1 = static_cast<CircleCollider*>(b1->collider);
+    CircleCollider* coll2 = static_cast<CircleCollider*>(b2->collider);
+
+    Vector2d dist = b2->pos - b1->pos;
+    float radiusSum = coll1->r + coll2->r;
+    float distLen = dist.length();
+
+    if(distLen >= radiusSum)
+        return CollisionManifold{false, Vector2d(0,0), 0};
+
+    return CollisionManifold{true, dist.normalize(), radiusSum - distLen};
+}
+
+CollisionManifold PhysicsEngine::intersectBoxBox(Body* b1, Body* b2){
+    BoxCollider* coll1 = static_cast<BoxCollider*>(b1->collider);
+    BoxCollider* coll2 = static_cast<BoxCollider*>(b2->collider);
+
+    float dx = b2->pos.x - b1->pos.x;
+    float overlapX = (coll1->width + coll2->width)/2 - std::abs(dx);
+    if(overlapX <= 0) return CollisionManifold{false, Vector2d(0,0), 0};
+
+    float dy = b2->pos.y - b1->pos.y;
+    float overlapY = (coll1->height + coll2->height)/2 - std::abs(dy);
+    if(overlapY <= 0) return CollisionManifold{false, Vector2d(0,0), 0};
+
+    Vector2d normal;
+    if(overlapX < overlapY){
+        normal = Vector2d(dx > 0 ? 1 : -1, 0);
+    }else{
+        normal = Vector2d(0, dy > 0 ? 1 : -1);
+    }
+
+    return CollisionManifold{true, normal, std::min(overlapX, overlapY)};
+}
+
+CollisionManifold PhysicsEngine::interesectCircleBox(Body* circle, Body* box){
+    BoxCollider* boxColl = static_cast<BoxCollider*>(box->collider);
+    CircleCollider* circleColl = static_cast<CircleCollider*>(circle->collider);
+
+    Vector2d circlePos = circle->pos;
+    Vector2d boxPos = box->pos;
+
+    float minX = boxPos.x - boxColl->width / 2;
+    float maxX = boxPos.x + boxColl->width / 2;
+    float minY = boxPos.y - boxColl->height / 2;
+    float maxY = boxPos.y + boxColl->height / 2;
+
+    Vector2d closestPoint;
+    closestPoint.x = std::clamp(circlePos.x, minX, maxX);
+    closestPoint.y = std::clamp(circlePos.y, minY, maxY);
+
+    Vector2d dist = circlePos - closestPoint;
+    if(dist.length() > circleColl->r)
+        return CollisionManifold{false, Vector2d(0,0), 0};
+    
+    float distLen = dist.length();
+    CollisionManifold m;
+    m.isColliding = true;
+
+    if(distLen == 0.0f){
+        float dLeft = circlePos.x - minX;
+        float dRight = maxX - circlePos.x;
+        float dTop = circlePos.y - minY;
+        float dBottom = maxY - circlePos.y;
+
+        float minDistX = std::min(dLeft, dRight);
+        float minDistY = std::min(dTop, dBottom);
+
+        if(minDistX < minDistY){
+            m.depth = circleColl->r + minDistX;
+            m.normal = (dLeft < dRight) ? Vector2d(1, 0) : Vector2d(-1, 0);
+        }else{
+            m.depth = circleColl->r + minDistY;
+            m.normal = (dTop < dBottom) ? Vector2d(0, 1) : Vector2d(0, -1);
+        }
+    }else{
+        m.normal = dist.normalize();
+        m.depth = circleColl->r - distLen;
+    }
+
+    return m;
+}
+
 
 void PhysicsEngine::handleWallCollision(Body* b){
     CircleCollider* coll = static_cast<CircleCollider*>(b->collider);
@@ -77,36 +186,7 @@ void PhysicsEngine::handleWallCollision(Body* b){
     }
 }
 
-bool PhysicsEngine::checkCollision(Body* b1, Body* b2){
-    if(b1->collider->shapeType == CIRCLE && b2->collider->shapeType == CIRCLE){
-        CircleCollider* coll1 = static_cast<CircleCollider*>(b1->collider);
-        CircleCollider* coll2 = static_cast<CircleCollider*>(b2->collider);
 
-        Vector2d dist = b2->pos - b1->pos;
-        float radiusSum = coll1->r + coll2->r;
-        if(dist.lengthSquared() < radiusSum * radiusSum){
-            return true;
-        }
-    }
-
-    return false;
-}
-
-bool PhysicsEngine::checkAABB(Body* b1, Body* b2){
-    BoxCollider* box1 = static_cast<BoxCollider*>(b1->collider);
-    BoxCollider* box2 = static_cast<BoxCollider*>(b2->collider);
-
-    float dx = std::abs(b1->pos.x - b2->pos.x);
-    float minDistX = (box1->width + box2->width)/2.0f;
-    if(dx >= minDistX) return false;
-
-    
-    float dy = std::abs(b1->pos.y - b2->pos.y);
-    float minDistY = (box1->height + box2->height)/2.0f;
-    if(dy >= minDistY) return false;
-
-    return true;
-}
 
 float PhysicsEngine::getTotalEnergy() const{
     float energy = 0;
