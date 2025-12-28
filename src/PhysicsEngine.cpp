@@ -1,25 +1,24 @@
 #include "PhysicsEngine.h"
 
 void PhysicsEngine::update(float dt){
+    //add forces
     for (Body* body : bodies) {
         if (body->getInvMass() == 0) continue;
-
         if(Config::useGravity) body->applyForce(gravity * body->getMass());
-        // Vector2d d = Vector2d(400, 300) - body->pos;
-        // body->applyForce(50 * d.normalize());
-        // if(body != bodies[0]){
-        //     Vector2d d = bodies[0]->pos - body->pos;
-        //     body->applyForce(50 * d.normalize());
-        // }
     }
 
+    applyNBodyForces();
+
+
+    //update bodies
     for(Body* body: bodies){
         body->update(dt);
     }
 
-    
+    //check for collsions
     for(unsigned int i = 0; i < bodies.size(); i++){
         if(Config::useWindowCollision) handleWallCollision(bodies[i]);
+        if(!Config::useBodiesCollision) continue;
         for(unsigned int j = i+1; j < bodies.size(); j++){
             Body* b1 = bodies[i];
             Body* b2 = bodies[j];
@@ -29,6 +28,36 @@ void PhysicsEngine::update(float dt){
             if(m.isColliding){
                 handleCollision(b1, b2, m);
             }
+        }
+    }
+}
+
+void PhysicsEngine::applyNBodyForces(){
+    if(!Config::useNBodyGravity && !Config::useElectrostatics) return;
+
+    for(int i = 0; i < bodies.size(); i++){
+        for(int j = i+1; j < bodies.size(); j++){
+            Body* b1 = bodies[i];
+            Body* b2 = bodies[j];
+
+            if(b1->getInvMass() == 0 && b2->getInvMass() == 0) continue;
+            Vector2d r = b2->pos - b1->pos;
+            float distSqr = r.lengthSquared();
+            if(distSqr == 0) continue;
+
+            Vector2d force(0,0);
+            if(Config::useNBodyGravity){
+                float fGrav = (Config::G * b1->getMass() * b2->getMass()) / distSqr;
+                force += r.normalize() * fGrav;
+            }
+
+            if(Config::useElectrostatics){
+                float fElec = -(Config::K * b1->charge * b2->charge) / distSqr;
+                force += r.normalize() * fElec;
+            }
+    
+            b1->applyForce(force);
+            b2->applyForce(-1 * force);
         }
     }
 }
@@ -186,12 +215,60 @@ void PhysicsEngine::handleWallCollision(Body* b){
     }
 }
 
-
-
-float PhysicsEngine::getTotalEnergy() const{
-    float energy = 0;
-    for(Body* b: bodies){
-        energy += b->getMass()/2 * b->vel.dot(b->vel);
+float PhysicsEngine::getKineticEnergy() const{
+    float energy = 0.0f;
+    for(const Body* body: bodies){
+        if(body->getInvMass() == 0) continue;
+        energy += 0.5f * body->getMass() * body->vel.lengthSquared();
     }
     return energy;
+}
+
+float PhysicsEngine::getPotentialEnergy() const{
+    float energy = 0.0f;
+    
+    if(Config::useGravity){
+        for(const Body* body: bodies){
+            if(body->getInvMass() == 0) continue;
+            energy -= body->getMass() * gravity.y * body->pos.y;
+            energy -= body->getMass() *  gravity.x * body->pos.x;
+        }
+    }
+
+    if(Config::useNBodyGravity || Config::useElectrostatics){
+        for (int i = 0; i < bodies.size(); i++)
+        {
+            for (int j = i + 1; j < bodies.size(); j++)
+            {
+                Body* b1 = bodies[i];
+                Body* b2 = bodies[j];
+
+                if(b1->getInvMass() == 0 && b2->getInvMass() == 0) continue;
+                Vector2d r = b2->pos - b1->pos;
+                float dist = r.length();
+                dist = std::max(dist, 0.001f);
+
+                if (Config::useNBodyGravity) {
+                    energy -= (Config::G * b1->getMass() * b2->getMass()) / dist;
+                }
+                
+                if(Config::useElectrostatics){
+                    energy += (Config::K * b1->charge * b2->charge) / dist;
+                }
+            }
+            
+        }
+        
+    }  
+
+    return energy;
+}
+
+Vector2d PhysicsEngine::getTotalMomentum() const{
+    Vector2d totalMomentum(0,0);
+    for(const Body* body: bodies){
+        if(body->getInvMass() == 0) continue;
+        totalMomentum += body->vel * body->getMass();
+    }
+    return totalMomentum;
 }

@@ -18,23 +18,26 @@ struct CollisionManifold{
 class PhysicsEngine {
     std::vector<Body*> bodies;
     Vector2d gravity;
-    float initialEnergy;
+
     void handleWallCollision(Body* b);
+    void handleCollision(Body* b1, Body* b2, const CollisionManifold& m);
 
     CollisionManifold checkCollision(Body* b1, Body* b2);
-
     CollisionManifold interesectCircleCircle(Body* b1, Body* b2);
     CollisionManifold interesectCircleBox(Body* circle, Body* box);
     CollisionManifold intersectBoxBox(Body* b1, Body* b2);
 
-    void handleCollision(Body* b1, Body* b2, const CollisionManifold& m);
+    void applyNBodyForces();
+
 public:
-    PhysicsEngine(const Vector2d& gravity = Vector2d(0, 9.81)) : gravity(gravity), initialEnergy(0) {}
-    void addBody(Body* body) {bodies.push_back(body); initialEnergy=getTotalEnergy();}
+    PhysicsEngine(const Vector2d& gravity = Vector2d(0, 9.81)) : gravity(gravity) {}
+    void addBody(Body* body) {bodies.push_back(body);}
     void update(float dt);
     std::vector<Body*> getBodies() const { return bodies; }
-    float getTotalEnergy() const;
-    float getInitialEnergy() const {return initialEnergy;}
+    float getKineticEnergy() const;
+    float getPotentialEnergy() const;
+    float getTotalEnergy() const {return getKineticEnergy() + getPotentialEnergy();}
+    Vector2d getTotalMomentum() const;
 };
 
 #endif
