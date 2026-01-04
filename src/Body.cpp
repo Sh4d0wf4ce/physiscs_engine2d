@@ -16,4 +16,9 @@ void Body::update(float dt){
     vel += a*dt;
     pos += vel*dt;
     clearForces();
+
+    trail.push_back(pos);
+    if(trail.size() > maxTrailLength){
+        trail.pop_front();
+    }
 }

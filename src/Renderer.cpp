@@ -1,5 +1,37 @@
 #include "Renderer.h"
 
+void Renderer::render(const PhysicsEngine& engine, std::string debugInfo){
+    const std::vector<Body*> bodies = engine.getBodies();
+
+    for(const Body* body: bodies){
+        drawTrail(*body);
+    }
+
+    for(const Body* body: bodies){
+        switch (body->collider->shapeType)
+        {
+        case CIRCLE:
+            drawCircle(*body);
+            break;
+        case BOX:
+            drawBox(*body);
+            break;
+        default:
+            break;
+        }
+        
+    }
+
+    sf::Font font("assets/fonts/GoogleSans-Regular.ttf");
+    sf::Text txt(font);
+    txt.setCharacterSize(20);
+    txt.setFillColor(sf::Color::White);
+    txt.setPosition({10.0f, 10.0f});
+    txt.setString(debugInfo);
+
+    window.draw(txt);
+}
+
 Vector2d Renderer::screenToReal(const Vector2d& pos){
     return Vector2d((pos.x * scale) + Config::WINDOW_WIDTH / 2.0f, -(pos.y * scale) + Config::WINDOW_HEIGHT / 2.0f);
 }
@@ -30,30 +62,20 @@ void Renderer::drawBox(const Body& body){
     window.draw(shape);
 }
 
-void Renderer::render(const PhysicsEngine& engine, std::string debugInfo){
-    const std::vector<Body*> bodies = engine.getBodies();
+void Renderer::drawTrail(const Body& body){
+    if(body.trail.size() < 2) return;
+    sf::VertexArray trail(sf::PrimitiveType::LineStrip, body.trail.size());
 
-    for(const Body* body: bodies){
-        switch (body->collider->shapeType)
-        {
-        case CIRCLE:
-            drawCircle(*body);
-            break;
-        case BOX:
-            drawBox(*body);
-            break;
-        default:
-            break;
-        }
+    for(int i = 0; i < body.trail.size(); i++){
+        Vector2d screenPos = screenToReal(body.trail[i]);
+        trail[i].position = sf::Vector2f(screenPos.x, screenPos.y);
         
+        sf::Color color = Config::COLOR_DEFAULT;
+        float alpha = static_cast<float>(i) / body.trail.size();
+        color.a = static_cast<std::uint8_t>(alpha * 255);
+
+        trail[i].color = color;
     }
 
-    sf::Font font("assets/fonts/GoogleSans-Regular.ttf");
-    sf::Text txt(font);
-    txt.setCharacterSize(20);
-    txt.setFillColor(sf::Color::White);
-    txt.setPosition({10.0f, 10.0f});
-    txt.setString(debugInfo);
-
-    window.draw(txt);
+    window.draw(trail);
 }

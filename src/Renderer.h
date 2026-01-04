@@ -13,6 +13,7 @@ class Renderer{
     Vector2d screenToReal(const Vector2d& pos);
     void drawCircle(const Body& body);
     void drawBox(const Body& body);
+    void drawTrail(const Body& body);
 public:
     Renderer(sf::RenderWindow& window, float scale = 1): window(window), scale(scale) {}
     void render(const PhysicsEngine& engine, std::string debugInfo = "");
