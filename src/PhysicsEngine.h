@@ -12,12 +12,14 @@ struct CollisionManifold{
         bool isColliding;
         Vector2d normal;
         float depth;
-    };
+};
 
 
 class PhysicsEngine {
     std::vector<Body*> bodies;
     Vector2d gravity;
+    float simWidth;
+    float simHeight;
 
     void handleWallCollision(Body* b);
     void handleCollision(Body* b1, Body* b2, const CollisionManifold& m);
@@ -30,7 +32,7 @@ class PhysicsEngine {
     void applyNBodyForces();
 
 public:
-    PhysicsEngine(const Vector2d& gravity = Vector2d(0, 9.81)) : gravity(gravity) {}
+    PhysicsEngine(const Vector2d& gravity = Vector2d(0, 9.81)) : gravity(gravity), simWidth(100), simHeight(100) {}
     void addBody(Body* body) {bodies.push_back(body);}
     void update(float dt);
     std::vector<Body*> getBodies() const { return bodies; }
@@ -38,6 +40,7 @@ public:
     float getPotentialEnergy() const;
     float getTotalEnergy() const {return getKineticEnergy() + getPotentialEnergy();}
     Vector2d getTotalMomentum() const;
+    void setSimBounds(float width, float height) {simWidth = width; simHeight = height; }
 };
 
 #endif

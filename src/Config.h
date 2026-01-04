@@ -12,7 +12,7 @@ struct Config
     static inline float G = 1000.0f;
     static inline float K = 10000.0f;
 
-    static inline bool useWindowCollision = false;
+    static inline bool useWindowCollision = true;
     static inline bool useBodiesCollision = true;
     static inline bool useGravity = false;
     static inline bool useNBodyGravity = true;

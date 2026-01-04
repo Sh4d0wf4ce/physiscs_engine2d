@@ -23,6 +23,10 @@ int main() {
     engine.addBody(planet2);
     engine.addBody(planet3);
 
+    //make one ball at the center with random velocity
+    // Body* ball = new Body({0,0}, {-100, 20}, 10, 0.5f, 1, new CircleCollider(15));
+    // engine.addBody(ball);
+
     // Body* b1 = new Body(Vector2d(-0.97000436, 0.24308753), Vector2d(0.466203685, 0.43236573), 1, 0.0f, 0, new CircleCollider(5));
     // Body* b2 = new Body(Vector2d(0.0, 0.0), Vector2d(-0.93240737, -0.86473146), 1, 0.0f, 0, new CircleCollider(5));
     // Body* b3 = new Body(Vector2d(0.97000436, -0.24308753), Vector2d(0.466203685, 0.43236573), 1, 0.0f, 0, new CircleCollider(5));
@@ -38,10 +42,14 @@ int main() {
     // }
     //add four protons in the center
     
-    // engine.addBody(new Body({Config::WINDOW_WIDTH / 2.0f, Config::WINDOW_HEIGHT / 2.0f}, {0, 0}, 100, 0.1f, 1, new CircleCollider(10)));
-    // engine.addBody(new Body({Config::WINDOW_WIDTH / 2.0f + 50, Config::WINDOW_HEIGHT / 2.0f}, {0, 0}, 100, 0.1f, 1, new CircleCollider(10)));
-    // engine.addBody(new Body({Config::WINDOW_WIDTH / 2.0f - 50, Config::WINDOW_HEIGHT / 2.0f}, {0, 0}, 100, 0.1f, 1, new CircleCollider(10)));
-    // engine.addBody(new Body({Config::WINDOW_WIDTH / 2.0f, Config::WINDOW_HEIGHT / 2.0f + 50}, {0, 0}, 100, 0.1f, 1, new CircleCollider(15)));
+    // engine.addBody(new Body({Config::WINDOW_WIDTH / 2.0f, Config::WINDOW_HEIGHT / 2.0f}, {0, 0}, 1, 0.1f, 1, new CircleCollider(10)));
+    // engine.addBody(new Body({Config::WINDOW_WIDTH / 2.0f + 50, Config::WINDOW_HEIGHT / 2.0f}, {0, 0}, 1, 0.1f, 1, new CircleCollider(10)));
+    // engine.addBody(new Body({Config::WINDOW_WIDTH / 2.0f - 50, Config::WINDOW_HEIGHT / 2.0f}, {0, 0}, 1, 0.1f, 1, new CircleCollider(10)));
+    // engine.addBody(new Body({Config::WINDOW_WIDTH / 2.0f, Config::WINDOW_HEIGHT / 2.0f + 50}, {0, 0}, 1, 0.1f, 1, new CircleCollider(15)));
+
+    float simWidth = Config::WINDOW_WIDTH / Config::SCALE;
+    float simHeight = Config::WINDOW_HEIGHT / Config::SCALE;
+    engine.setSimBounds(simWidth, simHeight);
 
     profiler.reset(engine);
     sf::Clock clock;
@@ -53,7 +61,8 @@ int main() {
             if(event->is<sf::Event::Closed>())window.close();
             if(event->is<sf::Event::MouseButtonPressed>()){
                 sf::Vector2 pos = sf::Mouse::getPosition(window);
-                engine.addBody(new Body({pos.x, pos.y}, {0, 0}, 1, 1, 1, new CircleCollider(20)));
+                Vector2d worldPos = {(pos.x - Config::WINDOW_WIDTH / 2.0f)/Config::SCALE, -(pos.y - Config::WINDOW_HEIGHT / 2.0f)/Config::SCALE};
+                engine.addBody(new Body(worldPos, {0, 0}, 1, 1, 50, new CircleCollider(20)));
             }
         }
         

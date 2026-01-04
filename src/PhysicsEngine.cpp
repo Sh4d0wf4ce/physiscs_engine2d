@@ -193,23 +193,23 @@ CollisionManifold PhysicsEngine::interesectCircleBox(Body* circle, Body* box){
 
 void PhysicsEngine::handleWallCollision(Body* b){
     CircleCollider* coll = static_cast<CircleCollider*>(b->collider);
-    if(b->pos.x < coll->r){
-        b->pos.x = coll->r;
+    if(b->pos.x - coll->r < -simWidth/2.0f){
+        b->pos.x = -simWidth/2.0f + coll->r;
         b->vel.x *= -1;
         b->vel *= b->restitution;
     }
-    if(b->pos.x > Config::WINDOW_WIDTH - coll->r){
-        b->pos.x = Config::WINDOW_WIDTH - coll->r;
+    if(b->pos.x + coll->r > simWidth/2.0f){
+        b->pos.x = simWidth/2.0f - coll->r;
         b->vel.x *= -1;
         b->vel *= b->restitution;
     }
-    if(b->pos.y > Config::WINDOW_HEIGHT - coll->r){
-        b->pos.y = Config::WINDOW_HEIGHT - coll->r;
+    if(b->pos.y + coll->r > simHeight/2.0f){
+        b->pos.y = simHeight/2.0f - coll->r;
         b->vel.y *= -1;
         b->vel *= b->restitution;
     }
-    if(b->pos.y < coll->r){
-        b->pos.y = coll->r;
+    if(b->pos.y - coll->r < -simHeight/2.0f){
+        b->pos.y = -simHeight/2.0f + coll->r;
         b->vel.y *= -1;
         b->vel *= b->restitution;
     }
