@@ -23,12 +23,12 @@ int main() {
     engine.addBody(planet2);
     engine.addBody(planet3);
 
-    // Body* b1 = new Body(Vector2d(-0.97000436, 0.24308753), Vector2d(0.466203685, 0.43236573), 1, 0.0f, 0, new CircleCollider(5));
-    // Body* b2 = new Body(Vector2d(0.0, 0.0), Vector2d(-0.93240737, -0.86473146), 1, 0.0f, 0, new CircleCollider(5));
-    // Body* b3 = new Body(Vector2d(0.97000436, -0.24308753), Vector2d(0.466203685, 0.43236573), 1, 0.0f, 0, new CircleCollider(5));
-    // engine.addBody(b1);
-    // engine.addBody(b2);
-    // engine.addBody(b3);
+    Body* b1 = new Body(Vector2d(-0.97000436, 0.24308753), Vector2d(0.466203685, 0.43236573), 1, 0.0f, 0, new CircleCollider(5));
+    Body* b2 = new Body(Vector2d(0.0, 0.0), Vector2d(-0.93240737, -0.86473146), 1, 0.0f, 0, new CircleCollider(5));
+    Body* b3 = new Body(Vector2d(0.97000436, -0.24308753), Vector2d(0.466203685, 0.43236573), 1, 0.0f, 0, new CircleCollider(5));
+    engine.addBody(b1);
+    engine.addBody(b2);
+    engine.addBody(b3);
 
     //create 200 electrons in random positions
     // for(int i = 0; i < 200; i++){
