@@ -28,8 +28,8 @@ ALL_OBJECTS := $(OBJECTS) $(IMGUI_OBJECTS)
 
 all: $(TARGET)
 
-$(TARGET): $(OBJECTS) $(BIN_DLLS) | $(BIN_DIR)
-	$(CXX) $(OBJECTS) -o $@ $(LIBS)
+$(TARGET): $(ALL_OBJECTS) $(BIN_DLLS) | $(BIN_DIR)
+	$(CXX) $(ALL_OBJECTS) -o $@ $(LIBS)
 
 $(BIN_DIR)/%.dll: $(SFML_DLL_DIR)/%.dll | $(BIN_DIR)
 	powershell -Command "if (-not (Test-Path '$(BIN_DIR)/$(@F)')) { Copy-Item '$<' '$(BIN_DIR)' }"

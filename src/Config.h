@@ -7,8 +7,8 @@ struct Config
 {
     static constexpr int WINDOW_WIDTH = 800;
     static constexpr int WINDOW_HEIGHT = 600;
-    static constexpr float SCALE = 1.0f;
-
+    
+    static inline float SCALE = 1.0f;
     static inline float G = 1000.0f;
     static inline float K = 10000.0f;
 
