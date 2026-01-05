@@ -33,14 +33,16 @@ class PhysicsEngine {
     void applyNBodyForces();
 
 public:
-    PhysicsEngine(const Vector2d& gravity = Vector2d(0, 9.81)) : gravity(gravity), simWidth(100), simHeight(100) {}
+    PhysicsEngine(const Vector2d& gravity = Vector2d(0, -9.81)) : gravity(gravity), simWidth(100), simHeight(100) {}
     void addBody(Body* body) {bodies.push_back(body);}
+    void removeBody(Body* body);
     void update(float dt);
     std::vector<Body*> getBodies() const { return bodies; }
     float getKineticEnergy() const;
     float getPotentialEnergy() const;
     float getTotalEnergy() const {return getKineticEnergy() + getPotentialEnergy();}
     Vector2d getTotalMomentum() const;
+    Vector2d getSimBounds() const {return {simWidth, simHeight};}
     void setSimBounds(float width, float height) {simWidth = width; simHeight = height; }
     void saveState();
     void restoreState();

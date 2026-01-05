@@ -311,3 +311,11 @@ Body* PhysicsEngine::findBodyAt(Vector2d pos){
 
     return nullptr;
 }
+
+void PhysicsEngine::removeBody(Body* body){
+    auto it = std::find(bodies.begin(), bodies.end(), body);
+    if(it != bodies.end()){
+        delete *it;
+        bodies.erase(it);
+    }
+}

@@ -14,9 +14,13 @@ struct Config
 
     static inline bool useWindowCollision = true;
     static inline bool useBodiesCollision = true;
+
     static inline bool useGravity = false;
     static inline bool useNBodyGravity = true;
     static inline bool useElectrostatics = true;
+
+    static inline bool renderTrails = true;
+    static inline bool renderWorldBounds = true;
 
     static inline const sf::Color COLOR_BACKGROUND = sf::Color::Black;
     static inline const sf::Color COLOR_DEFAULT = sf::Color::White;

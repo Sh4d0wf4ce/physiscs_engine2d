@@ -8,15 +8,13 @@
 
 class Renderer{
     sf::RenderWindow& window;
-    float scale;
 
     void drawCircle(const Body& body);
     void drawBox(const Body& body);
     void drawTrail(const Body& body);
 public:
-    Renderer(sf::RenderWindow& window, float scale = 1): window(window), scale(scale) {}
+    Renderer(sf::RenderWindow& window): window(window) {}
     void render(const PhysicsEngine& engine, std::string debugInfo = "");
-    void setScale(float scale) {this->scale = scale;}
     Vector2d screenToReal(const Vector2d& pos);
     Vector2d RealToScreen(const Vector2d& pos);
     void drawSelection(const Body& body);
