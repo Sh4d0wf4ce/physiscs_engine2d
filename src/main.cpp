@@ -44,7 +44,6 @@ int main() {
             if(const auto& keyEvent = event->getIf<sf::Event::KeyPressed>()){
                 if(keyEvent->code == sf::Keyboard::Key::Space){
                     if(state ==  AppState::EDITOR){
-                        engine.saveState();
                         state = AppState::SIMULATION;
                     }else{
                         state = AppState::EDITOR;
@@ -72,11 +71,11 @@ int main() {
         if(state == AppState::SIMULATION){
             engine.update(dt);
             profiler.update(dt);
-        }else if(AppState::EDITOR){
-            if(selectedBody && sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)){
-                Vector2d mPos = renderer.RealToScreen(Vector2d(sf::Mouse::getPosition(window).x, sf::Mouse::getPosition(window).y));
-                selectedBody->pos = mPos;
-            }
+        }else if(state == AppState::EDITOR){
+            // if(selectedBody && sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)){
+            //     Vector2d mPos = renderer.RealToScreen(Vector2d(sf::Mouse::getPosition(window).x, sf::Mouse::getPosition(window).y));
+            //     selectedBody->pos = mPos;
+            // }
         }
 
         window.clear(Config::COLOR_BACKGROUND);
