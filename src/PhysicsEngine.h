@@ -17,6 +17,7 @@ struct CollisionManifold{
 
 class PhysicsEngine {
     std::vector<Body*> bodies;
+    std::vector<Body*> savedState;
     Vector2d gravity;
     float simWidth;
     float simHeight;
@@ -41,6 +42,9 @@ public:
     float getTotalEnergy() const {return getKineticEnergy() + getPotentialEnergy();}
     Vector2d getTotalMomentum() const;
     void setSimBounds(float width, float height) {simWidth = width; simHeight = height; }
+    void saveState();
+    void restoreState();
+    Body* findBodyAt(Vector2d pos);
 };
 
 #endif

@@ -6,14 +6,20 @@
 #include <random>
 #include <math.h>
 
+enum AppState {EDITOR, SIMULATION};
 
 int main() {
     sf::RenderWindow window(sf::VideoMode({Config::WINDOW_WIDTH, Config::WINDOW_HEIGHT}), "Physics Engine 2D");
     window.setFramerateLimit(60);
 
     PhysicsEngine engine;
+    AppState state = AppState::EDITOR;
+    Body* selectedBody = nullptr;
+
     Renderer renderer(window, Config::SCALE);
     Profiler profiler;
+
+
     Body* sun = new Body({0, 0}, {0, 0}, 10000, 0.0f, 0, new CircleCollider(30));
     Body* planet1 = new Body({200, 0}, {0, 223.61f}, 1, 0.0f, 0, new CircleCollider(10));
     Body* planet2 = new Body({-100, 0}, {0, -316.23f}, 1, 0.0f, 0, new CircleCollider(10));
@@ -22,54 +28,64 @@ int main() {
     engine.addBody(planet1);
     engine.addBody(planet2);
     engine.addBody(planet3);
-
-    //make one ball at the center with random velocity
-    // Body* ball = new Body({0,0}, {-100, 20}, 10, 0.5f, 1, new CircleCollider(15));
-    // engine.addBody(ball);
-
-    // Body* b1 = new Body(Vector2d(-0.97000436, 0.24308753), Vector2d(0.466203685, 0.43236573), 1, 0.0f, 0, new CircleCollider(5));
-    // Body* b2 = new Body(Vector2d(0.0, 0.0), Vector2d(-0.93240737, -0.86473146), 1, 0.0f, 0, new CircleCollider(5));
-    // Body* b3 = new Body(Vector2d(0.97000436, -0.24308753), Vector2d(0.466203685, 0.43236573), 1, 0.0f, 0, new CircleCollider(5));
-    // engine.addBody(b1);
-    // engine.addBody(b2);
-    // engine.addBody(b3);
-
-    //create 200 electrons in random positions
-    // for(int i = 0; i < 200; i++){
-    //     float x = static_cast<float>(rand() % Config::WINDOW_WIDTH);
-    //     float y = static_cast<float>(rand() % Config::WINDOW_HEIGHT);
-    //     engine.addBody(new Body({x, y}, {0, 0}, 1, 0.1f, -1, new CircleCollider(5)));
-    // }
-    //add four protons in the center
     
-    // engine.addBody(new Body({Config::WINDOW_WIDTH / 2.0f, Config::WINDOW_HEIGHT / 2.0f}, {0, 0}, 1, 0.1f, 1, new CircleCollider(10)));
-    // engine.addBody(new Body({Config::WINDOW_WIDTH / 2.0f + 50, Config::WINDOW_HEIGHT / 2.0f}, {0, 0}, 1, 0.1f, 1, new CircleCollider(10)));
-    // engine.addBody(new Body({Config::WINDOW_WIDTH / 2.0f - 50, Config::WINDOW_HEIGHT / 2.0f}, {0, 0}, 1, 0.1f, 1, new CircleCollider(10)));
-    // engine.addBody(new Body({Config::WINDOW_WIDTH / 2.0f, Config::WINDOW_HEIGHT / 2.0f + 50}, {0, 0}, 1, 0.1f, 1, new CircleCollider(15)));
 
     float simWidth = Config::WINDOW_WIDTH / Config::SCALE;
     float simHeight = Config::WINDOW_HEIGHT / Config::SCALE;
     engine.setSimBounds(simWidth, simHeight);
+    engine.saveState();
 
     profiler.reset(engine);
     sf::Clock clock;
 
     while(window.isOpen()){
-        float dt = clock.restart().asSeconds();
-
         while (const std::optional event = window.pollEvent()){
-            if(event->is<sf::Event::Closed>())window.close();
-            if(event->is<sf::Event::MouseButtonPressed>()){
-                sf::Vector2 pos = sf::Mouse::getPosition(window);
-                Vector2d worldPos = {(pos.x - Config::WINDOW_WIDTH / 2.0f)/Config::SCALE, -(pos.y - Config::WINDOW_HEIGHT / 2.0f)/Config::SCALE};
-                engine.addBody(new Body(worldPos, {0, 0}, 1, 1, 50, new CircleCollider(20)));
+            if(event->is<sf::Event::Closed>()) window.close();
+            if(const auto& keyEvent = event->getIf<sf::Event::KeyPressed>()){
+                if(keyEvent->code == sf::Keyboard::Key::Space){
+                    if(state ==  AppState::EDITOR){
+                        engine.saveState();
+                        state = AppState::SIMULATION;
+                    }else{
+                        state = AppState::EDITOR;
+                    }
+                }
+
+
+                if(keyEvent->code == sf::Keyboard::Key::R){
+                    selectedBody = nullptr;
+                    engine.restoreState();
+                }
+            }
+
+            if(const auto& mouseEvent = event->getIf<sf::Event::MouseButtonPressed>()){
+                if(state != AppState::EDITOR) continue;
+                if(mouseEvent->button == sf::Mouse::Button::Left){
+                    Vector2d mousePos = renderer.RealToScreen({mouseEvent->position.x, mouseEvent->position.y});
+                    selectedBody = engine.findBodyAt(mousePos);
+                }
             }
         }
+
+        float dt = clock.restart().asSeconds();
         
-        engine.update(dt);
-        profiler.update(dt);
+        if(state == AppState::SIMULATION){
+            engine.update(dt);
+            profiler.update(dt);
+        }else if(AppState::EDITOR){
+            if(selectedBody && sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)){
+                Vector2d mPos = renderer.RealToScreen(Vector2d(sf::Mouse::getPosition(window).x, sf::Mouse::getPosition(window).y));
+                selectedBody->pos = mPos;
+            }
+        }
+
         window.clear(Config::COLOR_BACKGROUND);
         renderer.render(engine, profiler.getDebugInfo(engine));
+
+        if(state == AppState::EDITOR && selectedBody){
+           renderer.drawSelection(*selectedBody);
+        }
+
         window.display();
     }
 

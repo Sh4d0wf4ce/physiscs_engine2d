@@ -23,6 +23,7 @@ struct Config
     static inline const sf::Color COLOR_POSITIVE_CHARGE = sf::Color::Red;
     static inline const sf::Color COLOR_NEGATIVE_CHARGE = sf::Color::Blue;
     static inline const sf::Color COLOR_BOX = sf::Color::Green;
+    static inline const sf::Color COLOR_SELECTION = sf::Color::Yellow;
 };
 
 #endif

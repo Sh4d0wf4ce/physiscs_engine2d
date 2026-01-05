@@ -22,3 +22,15 @@ void Body::update(float dt){
         trail.pop_front();
     }
 }
+
+Body* Body::clone() const {
+    Collider* newCol = nullptr;
+    if(collider->shapeType == CIRCLE){
+        newCol = new CircleCollider(*static_cast<CircleCollider*>(collider));
+    }else if(collider->shapeType == BOX){
+        newCol = new BoxCollider(*static_cast<BoxCollider*>(collider));
+    }
+
+    Body* newBody = new Body(pos, vel, mass, restitution, charge, newCol);
+    return newBody;
+}

@@ -23,6 +23,7 @@ public:
         : pos(pos), vel(vel), force(0, 0), restitution(restitution), charge(charge), collider(collider) { setMass(mass);}
     ~Body() {delete collider;}
 
+    Body* clone() const;
 
     void applyForce(const Vector2d& f) {force += f;}
     void clearForces() {force = Vector2d(0, 0);}

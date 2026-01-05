@@ -272,3 +272,42 @@ Vector2d PhysicsEngine::getTotalMomentum() const{
     }
     return totalMomentum;
 }
+
+void PhysicsEngine::saveState(){
+    for(Body* b: savedState) delete b;
+    savedState.clear();
+
+    for(Body* b: bodies)
+        savedState.push_back(b->clone());
+}
+
+void PhysicsEngine::restoreState(){
+    for(Body* b: bodies) delete b;
+    bodies.clear();
+
+    for(Body* b: savedState)
+        bodies.push_back(b->clone());
+}
+
+Body* PhysicsEngine::findBodyAt(Vector2d pos){
+    float width, height;
+    float padding = 5.0f;
+
+    for(Body* b: bodies){
+        Collider* col = b->collider;
+        if(col->shapeType == CIRCLE){
+            float r = static_cast<CircleCollider*>(col)->r;
+            width = r;
+            height = r;
+        }else if(col->shapeType == BOX){
+            BoxCollider* box = static_cast<BoxCollider*>(col);
+            width = box->width;
+            height = box->height;
+        }
+
+        if((pos.x > b->pos.x - width/2.0f - padding && pos.x < b->pos.x + width/2 + padding) && (pos.y > b->pos.y - height/2.0f - padding && pos.y < b->pos.y + height/2 + padding))
+            return b;
+    }
+
+    return nullptr;
+}

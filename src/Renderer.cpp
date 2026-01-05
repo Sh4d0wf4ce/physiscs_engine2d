@@ -36,6 +36,10 @@ Vector2d Renderer::screenToReal(const Vector2d& pos){
     return Vector2d((pos.x * scale) + Config::WINDOW_WIDTH / 2.0f, -(pos.y * scale) + Config::WINDOW_HEIGHT / 2.0f);
 }
 
+Vector2d Renderer::RealToScreen(const Vector2d& pos){
+    return Vector2d((pos.x - Config::WINDOW_WIDTH / 2.0f)/scale, -(pos.y -Config::WINDOW_HEIGHT / 2.0f)/scale);
+}
+
 void Renderer::drawCircle(const Body& body){
     sf::CircleShape shape;
     shape.setRadius(static_cast<CircleCollider*>(body.collider)->r * scale);
@@ -78,4 +82,34 @@ void Renderer::drawTrail(const Body& body){
     }
 
     window.draw(trail);
+}
+
+void Renderer::drawSelection(const Body& body){
+    float padding = 5.0f;
+    sf::Shape* shape = nullptr;
+    Collider* col = body.collider;
+    if(col->shapeType == CIRCLE){
+        CircleCollider* circle = static_cast<CircleCollider*>(col);
+        sf::CircleShape circleShape;
+        circleShape.setRadius((circle->r + padding) * scale);
+        circleShape.setOrigin(sf::Vector2f(circleShape.getRadius(), circleShape.getRadius()));
+        Vector2d screenPos = screenToReal(body.pos);
+        circleShape.setPosition(sf::Vector2f(screenPos.x, screenPos.y));
+        circleShape.setFillColor(sf::Color::Transparent);
+        circleShape.setOutlineColor(Config::COLOR_SELECTION);
+        circleShape.setOutlineThickness(2.0f);
+        shape = new sf::CircleShape(circleShape);
+    }else if(col->shapeType == BOX){
+        BoxCollider* box = static_cast<BoxCollider*>(col);
+        sf::RectangleShape rectShape(sf::Vector2f((box->width + 2*padding) * scale, (box->height + 2*padding) * scale));
+        rectShape.setOrigin(sf::Vector2f(rectShape.getSize().x / 2.0f, rectShape.getSize().y / 2.0f));
+        Vector2d screenPos = screenToReal(body.pos);
+        rectShape.setPosition(sf::Vector2f(screenPos.x, screenPos.y));
+        rectShape.setFillColor(sf::Color::Transparent);
+        rectShape.setOutlineColor(Config::COLOR_SELECTION);
+        rectShape.setOutlineThickness(2.0f);
+        shape = new sf::RectangleShape(rectShape);
+    }
+
+    window.draw(*shape);
 }
