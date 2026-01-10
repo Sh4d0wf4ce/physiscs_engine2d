@@ -20,6 +20,7 @@ struct Config
     static inline bool useElectrostatics = true;
 
     static inline bool renderTrails = true;
+    static inline bool renderVelocityVectors = true;
     static inline bool renderWorldBounds = true;
 
     static inline const sf::Color COLOR_BACKGROUND = sf::Color::Black;
@@ -28,6 +29,7 @@ struct Config
     static inline const sf::Color COLOR_NEGATIVE_CHARGE = sf::Color::Blue;
     static inline const sf::Color COLOR_BOX = sf::Color::Green;
     static inline const sf::Color COLOR_SELECTION = sf::Color::Yellow;
+    static inline const sf::Color COLOR_VECTOR = sf::Color::Red;
 };
 
 #endif

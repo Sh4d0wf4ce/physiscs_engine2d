@@ -23,6 +23,19 @@ void Renderer::render(const PhysicsEngine& engine, std::string debugInfo){
         }
     }
 
+    if(Config::renderVelocityVectors){
+        for(const Body* body: bodies){
+            float r = 0.0f;
+            Collider* col = body->collider;
+            if(col->shapeType == ShapeType::CIRCLE){
+                r = static_cast<CircleCollider*>(col)->r;
+            }
+            Vector2d vel = body->vel;
+
+            drawVector(body->pos+(vel.normalize()*r), body->vel);
+        }
+    }
+
 
     for(const Body* body: bodies){
         switch (body->collider->shapeType)
@@ -53,7 +66,7 @@ Vector2d Renderer::screenToReal(const Vector2d& pos){
     return Vector2d((pos.x * Config::SCALE) + Config::WINDOW_WIDTH / 2.0f, -(pos.y * Config::SCALE) + Config::WINDOW_HEIGHT / 2.0f);
 }
 
-Vector2d Renderer::RealToScreen(const Vector2d& pos){
+Vector2d Renderer::realToScreen(const Vector2d& pos){
     return Vector2d((pos.x - Config::WINDOW_WIDTH / 2.0f)/Config::SCALE, -(pos.y -Config::WINDOW_HEIGHT / 2.0f)/Config::SCALE);
 }
 
@@ -129,4 +142,40 @@ void Renderer::drawSelection(const Body& body){
     }
 
     window.draw(*shape);
+}
+
+void Renderer::drawVector(const Vector2d& start, const Vector2d& vector){
+    if(vector.lengthSquared() < 0.1f) return;
+    
+    Vector2d end = start + vector * 0.5f;
+    
+    Vector2d startScreen = screenToReal(start);
+    Vector2d endScreen = screenToReal(end);
+
+    std::array line =
+    {
+        sf::Vertex{{startScreen.x, startScreen.y}, Config::COLOR_VECTOR},
+        sf::Vertex{{endScreen.x, endScreen.y}, Config::COLOR_VECTOR}
+    };
+
+    float dx = endScreen.x - startScreen.x;
+    float dy = endScreen.y - startScreen.y;
+    float angle = std::atan2(dy, dx);
+
+    float arrowLen = 15.0f;
+    float arrowAngle = 0.5f;
+
+    float x1 = endScreen.x - arrowLen * std::cos(angle - arrowAngle);
+    float y1 = endScreen.y - arrowLen * std::sin(angle - arrowAngle);
+    float x2 = endScreen.x - arrowLen * std::cos(angle + arrowAngle);
+    float y2 = endScreen.y - arrowLen * std::sin(angle + arrowAngle);
+
+    std::array arrow = {
+        sf::Vertex{{endScreen.x, endScreen.y}, Config::COLOR_VECTOR},
+        sf::Vertex{{x1, y1}, Config::COLOR_VECTOR},
+        sf::Vertex{{x2, y2}, Config::COLOR_VECTOR},
+    };
+
+    window.draw(line.data(), line.size(), sf::PrimitiveType::Lines);
+    window.draw(arrow.data(), arrow.size(), sf::PrimitiveType::Triangles);
 }

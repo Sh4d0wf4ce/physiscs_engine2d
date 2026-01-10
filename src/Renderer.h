@@ -12,12 +12,13 @@ class Renderer{
     void drawCircle(const Body& body);
     void drawBox(const Body& body);
     void drawTrail(const Body& body);
+    void drawVector(const Vector2d& start, const Vector2d& vec);
 public:
     Renderer(sf::RenderWindow& window): window(window) {}
     void render(const PhysicsEngine& engine, std::string debugInfo = "");
-    Vector2d screenToReal(const Vector2d& pos);
-    Vector2d RealToScreen(const Vector2d& pos);
     void drawSelection(const Body& body);
+    static Vector2d screenToReal(const Vector2d& pos);
+    static Vector2d realToScreen(const Vector2d& pos);
 };
 
 #endif

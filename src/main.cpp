@@ -62,6 +62,10 @@ int main() {
     sf::Clock clock;
     sf::Clock deltaClock;
 
+    bool isDragging = false;
+    bool isVelocityDragging = false;
+    Vector2d dragOffset = {0, 0};
+
     while(window.isOpen()){
         while (const std::optional event = window.pollEvent()){
             ImGui::SFML::ProcessEvent(window, *event);
@@ -89,10 +93,29 @@ int main() {
                 }
 
                 if(const auto& mouseEvent = event->getIf<sf::Event::MouseButtonPressed>()){
-                    if(state != AppState::EDITOR) continue;
+                    Vector2d mousePos = Renderer::realToScreen({mouseEvent->position.x, mouseEvent->position.y});
+                    selectedBody = engine.findBodyAt(mousePos);
+
+                    if(selectedBody){
+                        if(mouseEvent->button == sf::Mouse::Button::Left && state == AppState::EDITOR){
+                            isDragging = true;
+                            dragOffset = selectedBody->pos - mousePos;
+                        }else if(mouseEvent->button == sf::Mouse::Button::Right && state == AppState::EDITOR){
+                            isVelocityDragging = true;
+                        }
+                    }else{
+                        if(mouseEvent->button == sf::Mouse::Button::Left) selectedBody = nullptr;
+                        isDragging = false;
+                        isVelocityDragging = false;
+                    }  
+                }
+
+                if(const auto& mouseEvent = event->getIf<sf::Event::MouseButtonReleased>()){
                     if(mouseEvent->button == sf::Mouse::Button::Left){
-                        Vector2d mousePos = renderer.RealToScreen({mouseEvent->position.x, mouseEvent->position.y});
-                        selectedBody = engine.findBodyAt(mousePos);
+                        isDragging = false;
+                    }
+                    if(mouseEvent->button == sf::Mouse::Button::Right){
+                        isVelocityDragging = false;
                     }
                 }
             }
@@ -171,6 +194,7 @@ int main() {
             ImGui::Separator();
             ImGui::Checkbox("Show Trails", &Config::renderTrails);
             ImGui::Checkbox("Show Boundaries", &Config::renderWorldBounds);
+            ImGui::Checkbox("Show Velocity Vectors", &Config::renderVelocityVectors);
         }
 
         if(ImGui::CollapsingHeader("Storage / Saves")){
@@ -357,6 +381,17 @@ int main() {
         if(state == AppState::SIMULATION){
             engine.update(dt);
             profiler.update(dt);
+        }
+
+        if(state == AppState::EDITOR && selectedBody) {
+            sf::Vector2i mouse = sf::Mouse::getPosition(window);
+            Vector2d mousePos = Renderer::realToScreen({mouse.x, mouse.y});
+
+            if(isDragging){
+                selectedBody->pos = mousePos + dragOffset;
+            }else if(isVelocityDragging){
+                selectedBody->vel = -1*(mousePos - selectedBody->pos);
+            }
         }
 
         window.clear(Config::COLOR_BACKGROUND);
