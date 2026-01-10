@@ -4,7 +4,7 @@ CXXFLAGS := -std=c++17 -Wall -Wextra -g
 SFML_PATH := lib/SFML
 IMGUI_PATH := lib/imgui
 
-INCLUDES  := -Isrc -I$(SFML_PATH)/include -I$(IMGUI_PATH)
+INCLUDES  := -Isrc -I$(SFML_PATH)/include -I$(IMGUI_PATH) -Ilib/json
 LIBS      := -L$(SFML_PATH)/lib -lsfml-graphics -lsfml-window -lsfml-system -lopengl32
 
 SRC_DIR  := src

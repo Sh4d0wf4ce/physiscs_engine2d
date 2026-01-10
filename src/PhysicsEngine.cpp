@@ -273,21 +273,6 @@ Vector2d PhysicsEngine::getTotalMomentum() const{
     return totalMomentum;
 }
 
-void PhysicsEngine::saveState(){
-    for(Body* b: savedState) delete b;
-    savedState.clear();
-
-    for(Body* b: bodies)
-        savedState.push_back(b->clone());
-}
-
-void PhysicsEngine::restoreState(){
-    for(Body* b: bodies) delete b;
-    bodies.clear();
-
-    for(Body* b: savedState)
-        bodies.push_back(b->clone());
-}
 
 Body* PhysicsEngine::findBodyAt(Vector2d pos){
     float width, height;
@@ -318,4 +303,9 @@ void PhysicsEngine::removeBody(Body* body){
         delete *it;
         bodies.erase(it);
     }
+}
+
+void PhysicsEngine::clearBodies(){
+    for(Body* b: bodies) delete b;
+    bodies.clear();
 }

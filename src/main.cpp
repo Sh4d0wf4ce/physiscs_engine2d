@@ -1,10 +1,14 @@
 #include <SFML/Graphics.hpp>
+#include <imgui.h>
+#include <imgui-SFML.h>
+#include <filesystem>
 #include "Config.h"
 #include "PhysicsEngine.h"
 #include "Renderer.h"
 #include "Profiler.h"
-#include <imgui.h>
-#include <imgui-SFML.h>
+#include "Serializer.h"
+
+namespace fs = std::filesystem;
 
 enum AppState {EDITOR, SIMULATION};
 
@@ -31,6 +35,13 @@ int main() {
     Renderer renderer(window);
     Profiler profiler;
 
+    if(!fs::exists("saves")){
+        fs::create_directory("saves");
+    }
+
+    char saveFileName[64] = "save1";
+    
+
 
     Body* sun = new Body({0, 0}, {0, 0}, 10000, 0.0f, 0, new CircleCollider(30));
     Body* planet1 = new Body({200, 0}, {0, 223.61f}, 1, 0.0f, 0, new CircleCollider(10));
@@ -45,9 +56,9 @@ int main() {
     float simWidth = Config::WINDOW_WIDTH / Config::SCALE;
     float simHeight = Config::WINDOW_HEIGHT / Config::SCALE;
     engine.setSimBounds(simWidth, simHeight);
-    engine.saveState();
     profiler.reset(engine);
-
+    
+    nlohmann::json initialState = Serializer::serialize(engine);
     sf::Clock clock;
     sf::Clock deltaClock;
 
@@ -73,7 +84,7 @@ int main() {
 
                     if(keyEvent->code == sf::Keyboard::Key::R){
                         selectedBody = nullptr;
-                        engine.restoreState();
+                        Serializer::deserialize(engine, initialState);
                     }
                 }
 
@@ -97,11 +108,11 @@ int main() {
         float width = ImGui::GetContentRegionAvail().x;
 
         if (state == AppState::EDITOR) {
-            if (ImGui::Button("PLAY (Space)", ImVec2(width * 0.3f, 30))) {
+            if (ImGui::Button("PLAY", ImVec2(width * 0.3f, 30))) {
                 state = AppState::SIMULATION;
             }
         } else {
-            if (ImGui::Button("PAUSE (Space)", ImVec2(width * 0.3f, 30))) {
+            if (ImGui::Button("PAUSE", ImVec2(width * 0.3f, 30))) {
                 state = AppState::EDITOR;
             }
         }
@@ -109,12 +120,12 @@ int main() {
         ImGui::SameLine();
         if (ImGui::Button("RESET", ImVec2(width * 0.3f, 30))) {
             selectedBody = nullptr;
-            engine.restoreState();
+            Serializer::deserialize(engine, initialState);
         }
 
         ImGui::SameLine();
         if (ImGui::Button("SAVE STATE", ImVec2(width * 0.3f, 30))) {
-            engine.saveState();
+            initialState = Serializer::serialize(engine);
         }
 
         ImGui::Spacing();
@@ -124,6 +135,7 @@ int main() {
         if (ImGui::Button("Add New Object...", ImVec2(-1, 40))) {
             ImGui::OpenPopup("Create Object");
         }
+
 
         if (ImGui::CollapsingHeader("Physics Rules", ImGuiTreeNodeFlags_DefaultOpen)) {
             ImGui::Checkbox("Check Body Collisions", &Config::useBodiesCollision);
@@ -147,7 +159,7 @@ int main() {
 
         if (ImGui::CollapsingHeader("World & View", ImGuiTreeNodeFlags_DefaultOpen)) {
             ImGui::Text("Camera Zoom:");
-            ImGui::SliderFloat("##zoom", &Config::SCALE, 0.1f, 100.0f, "%.1f px/m");
+            ImGui::SliderFloat("##zoom", &Config::SCALE, 0.1f, 100.0f, "%.1f px/m", ImGuiSliderFlags_Logarithmic);
             
             ImGui::Text("Simulation Bounds (Meters):");
             Vector2d bounds = engine.getSimBounds();
@@ -159,6 +171,55 @@ int main() {
             ImGui::Separator();
             ImGui::Checkbox("Show Trails", &Config::renderTrails);
             ImGui::Checkbox("Show Boundaries", &Config::renderWorldBounds);
+        }
+
+        if(ImGui::CollapsingHeader("Storage / Saves")){
+            ImGui::Text("Save to file: ");
+            ImGui::InputText(".json", saveFileName, IM_ARRAYSIZE(saveFileName));
+
+            if(ImGui::Button("Save", ImVec2(-1, 0))){
+                std::string path = "saves/" + std::string(saveFileName) + ".json";
+                Serializer::saveToFile(path, engine);
+            }
+
+            ImGui::Separator();
+            ImGui::Text("Load from file: ");
+
+            static int selectedFileIndex = -1;
+            std::vector<std::string> files;
+
+            if(fs::exists("saves")){
+                for(const auto& file: fs::directory_iterator("saves")){
+                    if(file.path().extension() == ".json"){
+                        files.push_back(file.path().filename().string());
+                    }
+                }
+            }
+
+            if(ImGui::BeginListBox("##files", ImVec2(-1, 100))){
+                for(int i = 0; i < files.size(); i++){
+                    const bool isSelected = (selectedFileIndex == i);
+                    if(ImGui::Selectable(files[i].c_str(), isSelected)){
+                        selectedFileIndex = i;
+                    }
+
+                    if(isSelected)
+                        ImGui::SetItemDefaultFocus();
+                }
+                ImGui::EndListBox();
+            }
+
+            if(ImGui::Button("Load", ImVec2(-1, 0))){
+                if(selectedFileIndex >= 0 && selectedFileIndex < files.size()){
+                    std::string path = "saves/" + files[selectedFileIndex];
+                    Serializer::loadFromFile(path, engine);
+
+                    selectedBody = nullptr;
+
+                    initialState = Serializer::serialize(engine);
+                    state = AppState::EDITOR;
+                }
+            }
         }
 
         if (ImGui::BeginPopupModal("Create Object", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
@@ -218,35 +279,6 @@ int main() {
 
         ImGui::End();
 
-        
-
-
-        ImGui::Begin("Global Settings");
-        ImGui::Text("Simulation Control");
-        if (state == AppState::EDITOR) {
-            if (ImGui::Button("PLAY (Space)")) {
-                state = AppState::SIMULATION;
-            }
-        } else {
-            if (ImGui::Button("PAUSE (Space)")) {
-                state = AppState::EDITOR;
-            }
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("RESET (R)")) {
-            selectedBody = nullptr;
-            engine.restoreState();
-        }
-
-        ImGui::Separator();
-        ImGui::Text("Physics Parameteres");
-        ImGui::DragFloat("Scale", &Config::SCALE, 0.1f, 0.1f, 100.0f);
-        ImGui::Checkbox("Enable Bodies Collision", &Config::useBodiesCollision);
-        ImGui::Checkbox("Enable Window Collision", &Config::useWindowCollision);
-        ImGui::Checkbox("Enable Electrostatics", &Config::useElectrostatics);
-        ImGui::Checkbox("Enable Gravity", &Config::useGravity);
-        ImGui::Checkbox("Enable N-Body", &Config::useNBodyGravity);
-        ImGui::End();
 
         if (selectedBody != nullptr) {
             ImGui::Begin("Inspector");
