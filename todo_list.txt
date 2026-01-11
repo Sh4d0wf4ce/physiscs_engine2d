@@ -18,8 +18,4 @@
 - nazewnictwo zmiennych realToScreen i ScreenToReal
 - zmienić nazewnictwo state -> mode
 - czy nie zmienić całej klasy renderer na statyczna
-- opcjonalnie: cemera follow
 - opcjonalnie sterowanie czasem:
-
-
-scroll zoom

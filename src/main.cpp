@@ -140,6 +140,12 @@ int main() {
                         isPanning = false;
                     }
                 }
+
+                if(const auto& mouseEvent = event->getIf<sf::Event::MouseWheelScrolled>()){
+                    float zoomFactor = 1.1f;
+                    float multiplier = mouseEvent->delta > 0 ? zoomFactor : (1.0f / zoomFactor);
+                    Config::SCALE = std::clamp(Config::SCALE * multiplier, 0.1f, 100.0f);
+                }
             }
         }
 
