@@ -62,8 +62,12 @@ int main() {
     sf::Clock clock;
     sf::Clock deltaClock;
 
+    bool isCameraFollowing = false;
     bool isDragging = false;
     bool isVelocityDragging = false;
+    bool isPanning = false;
+
+    sf::Vector2i lastMousePos;
     Vector2d dragOffset = {0, 0};
 
     while(window.isOpen()){
@@ -77,37 +81,54 @@ int main() {
 
             if(!keyboardOnUI && !mouseOnUI){
                 if(const auto& keyEvent = event->getIf<sf::Event::KeyPressed>()){
-                    if(keyEvent->code == sf::Keyboard::Key::Space){
+                    switch (keyEvent->code)
+                    {
+                    case sf::Keyboard::Key::Space:
                         if(state ==  AppState::EDITOR){
                             state = AppState::SIMULATION;
                         }else{
                             state = AppState::EDITOR;
                         }
-                    }
-
-
-                    if(keyEvent->code == sf::Keyboard::Key::R){
+                        break;
+                    
+                    case sf::Keyboard::Key::R:
                         selectedBody = nullptr;
+                        renderer.setCameraPos({0,0});
                         Serializer::deserialize(engine, initialState);
+                        break;
+                    
+                    case sf::Keyboard::Key::F:
+                        if(selectedBody)
+                            isCameraFollowing = !isCameraFollowing;
+                        else
+                            isCameraFollowing = false;
+                        break;
+                    default:
+                        break;
                     }
                 }
 
                 if(const auto& mouseEvent = event->getIf<sf::Event::MouseButtonPressed>()){
-                    Vector2d mousePos = Renderer::realToScreen({mouseEvent->position.x, mouseEvent->position.y});
+                    Vector2d mousePos = renderer.realToScreen({mouseEvent->position.x, mouseEvent->position.y});
                     selectedBody = engine.findBodyAt(mousePos);
+                    lastMousePos = mouseEvent->position;
 
                     if(selectedBody){
                         if(mouseEvent->button == sf::Mouse::Button::Left && state == AppState::EDITOR){
                             isDragging = true;
+                            isCameraFollowing = false;
                             dragOffset = selectedBody->pos - mousePos;
                         }else if(mouseEvent->button == sf::Mouse::Button::Right && state == AppState::EDITOR){
                             isVelocityDragging = true;
+                        }else if(mouseEvent->button == sf::Mouse::Button::Right && state == AppState::SIMULATION){
+                            isPanning = true;
                         }
                     }else{
                         if(mouseEvent->button == sf::Mouse::Button::Left) selectedBody = nullptr;
+                        if(mouseEvent->button == sf::Mouse::Button::Right) isPanning = true;
                         isDragging = false;
                         isVelocityDragging = false;
-                    }  
+                    }
                 }
 
                 if(const auto& mouseEvent = event->getIf<sf::Event::MouseButtonReleased>()){
@@ -116,6 +137,7 @@ int main() {
                     }
                     if(mouseEvent->button == sf::Mouse::Button::Right){
                         isVelocityDragging = false;
+                        isPanning = false;
                     }
                 }
             }
@@ -333,6 +355,18 @@ int main() {
                     selectedBody = bodies[currentIndex];
                 }
             }
+
+            ImGui::SameLine();
+
+            if (isCameraFollowing) {
+                ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.35f, 0.6f, 0.6f));
+                if (ImGui::Button("LOCKED (F)")) isCameraFollowing = false;
+                ImGui::PopStyleColor();
+            } else {
+                if (ImGui::Button("Follow (F)")) isCameraFollowing = true;
+            }
+
+            ImGui::Separator();
                 
             ImGui::Separator();
 
@@ -383,15 +417,29 @@ int main() {
             profiler.update(dt);
         }
 
-        if(state == AppState::EDITOR && selectedBody) {
-            sf::Vector2i mouse = sf::Mouse::getPosition(window);
-            Vector2d mousePos = Renderer::realToScreen({mouse.x, mouse.y});
+        sf::Vector2i mouse = sf::Mouse::getPosition(window);
+        Vector2d mousePos = renderer.realToScreen({mouse.x, mouse.y});
 
+        if(state == AppState::EDITOR && selectedBody) {
             if(isDragging){
                 selectedBody->pos = mousePos + dragOffset;
             }else if(isVelocityDragging){
                 selectedBody->vel = -1*(mousePos - selectedBody->pos);
             }
+        }
+        
+        if(isPanning){
+            sf::Vector2i mousePosDiff = lastMousePos - mouse;
+            float moveX = mousePosDiff.x / Config::SCALE;
+            float moveY = -mousePosDiff.y / Config::SCALE;
+
+            renderer.moveCamera({moveX, moveY});
+
+            lastMousePos = mouse;
+        }
+
+        if(isCameraFollowing && selectedBody){
+            renderer.setCameraPos(selectedBody->pos);
         }
 
         window.clear(Config::COLOR_BACKGROUND);

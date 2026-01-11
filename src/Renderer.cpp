@@ -63,11 +63,11 @@ void Renderer::render(const PhysicsEngine& engine, std::string debugInfo){
 }
 
 Vector2d Renderer::screenToReal(const Vector2d& pos){
-    return Vector2d((pos.x * Config::SCALE) + Config::WINDOW_WIDTH / 2.0f, -(pos.y * Config::SCALE) + Config::WINDOW_HEIGHT / 2.0f);
+    return Vector2d(((pos.x - cameraPos.x) * Config::SCALE) + Config::WINDOW_WIDTH / 2.0f, -((pos.y - cameraPos.y) * Config::SCALE) + Config::WINDOW_HEIGHT / 2.0f);
 }
 
 Vector2d Renderer::realToScreen(const Vector2d& pos){
-    return Vector2d((pos.x - Config::WINDOW_WIDTH / 2.0f)/Config::SCALE, -(pos.y -Config::WINDOW_HEIGHT / 2.0f)/Config::SCALE);
+    return Vector2d((pos.x - Config::WINDOW_WIDTH / 2.0f)/Config::SCALE + cameraPos.x, -(pos.y -Config::WINDOW_HEIGHT / 2.0f)/Config::SCALE + cameraPos.y);
 }
 
 void Renderer::drawCircle(const Body& body){

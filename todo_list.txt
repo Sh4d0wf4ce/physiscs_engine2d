@@ -1,0 +1,25 @@
+- naprawić CircleBoxCollision (tunelowanie, ma znaczenie co jest pierwsze w kolejce obiektow a nie powinno)
+- lepsza metoda integracji kroku czasowego
+- testy
+- poprawić wszędzie na 0.0f
+- opcjonalnie smart pointery
+- .vscode sprawdzić co tam jest i po co
+- makefile zrobić, żeby to sensownie dzialalo i dla windowsa i dla linuxa
+- naprawić gitignore
+- dokumentacja
+
+- global gravity (zmienić slider żeby poprawna wartość zmienial)
+- uporzdkowanie if/else w eventach
+- dodanie przykładowych scen
+- profiler (czy wogle jest potrzebny)
+- rozmieszczenie sensowne paneli i zablokowanie ich ruszania
+- rozmiary aplikacji
+- przy wall collision, zastanowić się czy caly wektor predkosci powinien być przemnożony przez restitution, czy tylko odpowiednia skladowa
+- nazewnictwo zmiennych realToScreen i ScreenToReal
+- zmienić nazewnictwo state -> mode
+- czy nie zmienić całej klasy renderer na statyczna
+- opcjonalnie: cemera follow
+- opcjonalnie sterowanie czasem:
+
+
+scroll zoom
