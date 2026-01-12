@@ -109,7 +109,7 @@ int main() {
                 }
 
                 if(const auto& mouseEvent = event->getIf<sf::Event::MouseButtonPressed>()){
-                    Vector2d mousePos = renderer.realToScreen({mouseEvent->position.x, mouseEvent->position.y});
+                    Vector2d mousePos = renderer.screenToReal({mouseEvent->position.x, mouseEvent->position.y});
                     selectedBody = engine.findBodyAt(mousePos);
                     lastMousePos = mouseEvent->position;
 
@@ -424,7 +424,7 @@ int main() {
         }
 
         sf::Vector2i mouse = sf::Mouse::getPosition(window);
-        Vector2d mousePos = renderer.realToScreen({mouse.x, mouse.y});
+        Vector2d mousePos = renderer.screenToReal({mouse.x, mouse.y});
 
         if(state == AppState::EDITOR && selectedBody) {
             if(isDragging){

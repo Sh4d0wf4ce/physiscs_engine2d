@@ -8,7 +8,7 @@ void Renderer::render(const PhysicsEngine& engine, std::string debugInfo){
         sf::RectangleShape boundsRect(sf::Vector2f(simBounds.x * Config::SCALE, simBounds.y * Config::SCALE));
 
         boundsRect.setOrigin(sf::Vector2f((simBounds.x * Config::SCALE) / 2.0f, (simBounds.y * Config::SCALE) / 2.0f));
-        Vector2d screenPos = screenToReal(Vector2d(0,0));
+        Vector2d screenPos = realToScreen(Vector2d(0,0));
         boundsRect.setPosition(sf::Vector2f(screenPos.x, screenPos.y));
         boundsRect.setFillColor(sf::Color::Transparent);
         boundsRect.setOutlineColor(sf::Color::White);
@@ -62,11 +62,11 @@ void Renderer::render(const PhysicsEngine& engine, std::string debugInfo){
     window.draw(txt);
 }
 
-Vector2d Renderer::screenToReal(const Vector2d& pos){
+Vector2d Renderer::realToScreen(const Vector2d& pos){
     return Vector2d(((pos.x - cameraPos.x) * Config::SCALE) + Config::WINDOW_WIDTH / 2.0f, -((pos.y - cameraPos.y) * Config::SCALE) + Config::WINDOW_HEIGHT / 2.0f);
 }
 
-Vector2d Renderer::realToScreen(const Vector2d& pos){
+Vector2d Renderer::screenToReal(const Vector2d& pos){
     return Vector2d((pos.x - Config::WINDOW_WIDTH / 2.0f)/Config::SCALE + cameraPos.x, -(pos.y -Config::WINDOW_HEIGHT / 2.0f)/Config::SCALE + cameraPos.y);
 }
 
@@ -74,7 +74,7 @@ void Renderer::drawCircle(const Body& body){
     sf::CircleShape shape;
     shape.setRadius(static_cast<CircleCollider*>(body.collider)->r * Config::SCALE);
     shape.setOrigin(sf::Vector2f(shape.getRadius(), shape.getRadius()));
-    Vector2d screenPos = screenToReal(body.pos);
+    Vector2d screenPos = realToScreen(body.pos);
     shape.setPosition(sf::Vector2f(screenPos.x, screenPos.y));
 
     if(body.charge > 0) shape.setFillColor(Config::COLOR_POSITIVE_CHARGE);
@@ -89,7 +89,7 @@ void Renderer::drawBox(const Body& body){
     sf::RectangleShape shape(sf::Vector2f(box->width * Config::SCALE, box->height * Config::SCALE));
     
     shape.setOrigin(sf::Vector2f((box->width * Config::SCALE) / 2.0f, (box->height * Config::SCALE) / 2.0f));
-    Vector2d screenPos = screenToReal(body.pos);
+    Vector2d screenPos = realToScreen(body.pos);
     shape.setPosition(sf::Vector2f(screenPos.x, screenPos.y));
     shape.setFillColor(Config::COLOR_BOX);
 
@@ -101,7 +101,7 @@ void Renderer::drawTrail(const Body& body){
     sf::VertexArray trail(sf::PrimitiveType::LineStrip, body.trail.size());
 
     for(int i = 0; i < body.trail.size(); i++){
-        Vector2d screenPos = screenToReal(body.trail[i]);
+        Vector2d screenPos = realToScreen(body.trail[i]);
         trail[i].position = sf::Vector2f(screenPos.x, screenPos.y);
         
         sf::Color color = Config::COLOR_DEFAULT;
@@ -123,7 +123,7 @@ void Renderer::drawSelection(const Body& body){
         sf::CircleShape circleShape;
         circleShape.setRadius((circle->r + padding) * Config::SCALE);
         circleShape.setOrigin(sf::Vector2f(circleShape.getRadius(), circleShape.getRadius()));
-        Vector2d screenPos = screenToReal(body.pos);
+        Vector2d screenPos = realToScreen(body.pos);
         circleShape.setPosition(sf::Vector2f(screenPos.x, screenPos.y));
         circleShape.setFillColor(sf::Color::Transparent);
         circleShape.setOutlineColor(Config::COLOR_SELECTION);
@@ -133,7 +133,7 @@ void Renderer::drawSelection(const Body& body){
         BoxCollider* box = static_cast<BoxCollider*>(col);
         sf::RectangleShape rectShape(sf::Vector2f((box->width + 2*padding) * Config::SCALE, (box->height + 2*padding) * Config::SCALE));
         rectShape.setOrigin(sf::Vector2f(rectShape.getSize().x / 2.0f, rectShape.getSize().y / 2.0f));
-        Vector2d screenPos = screenToReal(body.pos);
+        Vector2d screenPos = realToScreen(body.pos);
         rectShape.setPosition(sf::Vector2f(screenPos.x, screenPos.y));
         rectShape.setFillColor(sf::Color::Transparent);
         rectShape.setOutlineColor(Config::COLOR_SELECTION);
@@ -149,8 +149,8 @@ void Renderer::drawVector(const Vector2d& start, const Vector2d& vector){
     
     Vector2d end = start + vector * 0.5f;
     
-    Vector2d startScreen = screenToReal(start);
-    Vector2d endScreen = screenToReal(end);
+    Vector2d startScreen = realToScreen(start);
+    Vector2d endScreen = realToScreen(end);
 
     std::array line =
     {
