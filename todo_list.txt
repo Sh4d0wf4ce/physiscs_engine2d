@@ -14,8 +14,6 @@
 - profiler (czy wogle jest potrzebny)
 - rozmieszczenie sensowne paneli i zablokowanie ich ruszania
 - rozmiary aplikacji
-- przy wall collision, zastanowić się czy caly wektor predkosci powinien być przemnożony przez restitution, czy tylko odpowiednia skladowa
-- nazewnictwo zmiennych realToScreen i ScreenToReal
-- zmienić nazewnictwo state -> mode
+- problem z wykrywaniem klikanai obiektow, przy większych promieniach
 - czy nie zmienić całej klasy renderer na statyczna
 - opcjonalnie sterowanie czasem:

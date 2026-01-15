@@ -1,0 +1,255 @@
+{
+    "bodies": [
+        {
+            "charge": 0.0,
+            "mass": 10.0,
+            "pos": [
+                16.0,
+                -74.0
+            ],
+            "radius": 20.0,
+            "restitution": 0.8050000071525574,
+            "type": "CIRCLE",
+            "vel": [
+                0.0,
+                0.0
+            ]
+        },
+        {
+            "charge": 0.0,
+            "mass": 10.0,
+            "pos": [
+                -292.77801513671875,
+                0.0
+            ],
+            "radius": 20.0,
+            "restitution": 0.8059999942779541,
+            "type": "CIRCLE",
+            "vel": [
+                1115.420166015625,
+                0.0
+            ]
+        },
+        {
+            "charge": 0.0,
+            "mass": 10.0,
+            "pos": [
+                94.0,
+                148.0
+            ],
+            "radius": 20.0,
+            "restitution": 0.8050000071525574,
+            "type": "CIRCLE",
+            "vel": [
+                0.0,
+                0.0
+            ]
+        },
+        {
+            "charge": 0.0,
+            "mass": 10.0,
+            "pos": [
+                55.0,
+                -37.0
+            ],
+            "radius": 20.0,
+            "restitution": 0.8050000071525574,
+            "type": "CIRCLE",
+            "vel": [
+                0.0,
+                0.0
+            ]
+        },
+        {
+            "charge": 0.0,
+            "mass": 10.0,
+            "pos": [
+                -62.0,
+                0.0
+            ],
+            "radius": 20.0,
+            "restitution": 0.8050000071525574,
+            "type": "CIRCLE",
+            "vel": [
+                0.0,
+                0.0
+            ]
+        },
+        {
+            "charge": 0.0,
+            "mass": 10.0,
+            "pos": [
+                -23.0,
+                -37.0
+            ],
+            "radius": 20.0,
+            "restitution": 0.8050000071525574,
+            "type": "CIRCLE",
+            "vel": [
+                0.0,
+                0.0
+            ]
+        },
+        {
+            "charge": 0.0,
+            "mass": 10.0,
+            "pos": [
+                94.0,
+                74.0
+            ],
+            "radius": 20.0,
+            "restitution": 0.8050000071525574,
+            "type": "CIRCLE",
+            "vel": [
+                0.0,
+                0.0
+            ]
+        },
+        {
+            "charge": 0.0,
+            "mass": 10.0,
+            "pos": [
+                55.0,
+                -111.0
+            ],
+            "radius": 20.0,
+            "restitution": 0.8050000071525574,
+            "type": "CIRCLE",
+            "vel": [
+                0.0,
+                0.0
+            ]
+        },
+        {
+            "charge": 0.0,
+            "mass": 10.0,
+            "pos": [
+                16.0,
+                74.0
+            ],
+            "radius": 20.0,
+            "restitution": 0.8050000071525574,
+            "type": "CIRCLE",
+            "vel": [
+                0.0,
+                0.0
+            ]
+        },
+        {
+            "charge": 0.0,
+            "mass": 10.0,
+            "pos": [
+                55.0,
+                111.0
+            ],
+            "radius": 20.0,
+            "restitution": 0.8050000071525574,
+            "type": "CIRCLE",
+            "vel": [
+                0.0,
+                0.0
+            ]
+        },
+        {
+            "charge": 0.0,
+            "mass": 10.0,
+            "pos": [
+                -23.0,
+                37.0
+            ],
+            "radius": 20.0,
+            "restitution": 0.8050000071525574,
+            "type": "CIRCLE",
+            "vel": [
+                0.0,
+                0.0
+            ]
+        },
+        {
+            "charge": 0.0,
+            "mass": 10.0,
+            "pos": [
+                94.0,
+                0.0
+            ],
+            "radius": 20.0,
+            "restitution": 0.8050000071525574,
+            "type": "CIRCLE",
+            "vel": [
+                0.0,
+                0.0
+            ]
+        },
+        {
+            "charge": 0.0,
+            "mass": 10.0,
+            "pos": [
+                94.0,
+                -148.0
+            ],
+            "radius": 20.0,
+            "restitution": 0.8050000071525574,
+            "type": "CIRCLE",
+            "vel": [
+                0.0,
+                0.0
+            ]
+        },
+        {
+            "charge": 0.0,
+            "mass": 10.0,
+            "pos": [
+                94.0,
+                -74.0
+            ],
+            "radius": 20.0,
+            "restitution": 0.8050000071525574,
+            "type": "CIRCLE",
+            "vel": [
+                0.0,
+                0.0
+            ]
+        },
+        {
+            "charge": 0.0,
+            "mass": 10.0,
+            "pos": [
+                55.0,
+                37.0
+            ],
+            "radius": 20.0,
+            "restitution": 0.8050000071525574,
+            "type": "CIRCLE",
+            "vel": [
+                0.0,
+                0.0
+            ]
+        },
+        {
+            "charge": 0.0,
+            "mass": 10.0,
+            "pos": [
+                16.0,
+                0.0
+            ],
+            "radius": 20.0,
+            "restitution": 0.8050000071525574,
+            "type": "CIRCLE",
+            "vel": [
+                0.0,
+                0.0
+            ]
+        }
+    ],
+    "settings": {
+        "G": 1000.0,
+        "checkBodyCollisions": true,
+        "checkWindowCollisions": true,
+        "scale": 0.751314640045166,
+        "simHeight": 600.0,
+        "simWidth": 800.0,
+        "useElectrostatics": false,
+        "useGravity": false,
+        "useNBodyGravity": false
+    }
+}

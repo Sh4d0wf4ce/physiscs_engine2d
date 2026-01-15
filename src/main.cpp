@@ -10,7 +10,7 @@
 
 namespace fs = std::filesystem;
 
-enum AppState {EDITOR, SIMULATION};
+enum AppMode {EDITOR, SIMULATION};
 
 static void HelpMarker(const char* desc){
     ImGui::TextDisabled("(?)");
@@ -29,7 +29,7 @@ int main() {
     if(!ImGui::SFML::Init(window)) return -1;
 
     PhysicsEngine engine;
-    AppState state = AppState::EDITOR;
+    AppMode mode = AppMode::EDITOR;
     Body* selectedBody = nullptr;
 
     Renderer renderer(window);
@@ -84,10 +84,10 @@ int main() {
                     switch (keyEvent->code)
                     {
                     case sf::Keyboard::Key::Space:
-                        if(state ==  AppState::EDITOR){
-                            state = AppState::SIMULATION;
+                        if(mode ==  AppMode::EDITOR){
+                            mode = AppMode::SIMULATION;
                         }else{
-                            state = AppState::EDITOR;
+                            mode = AppMode::EDITOR;
                         }
                         break;
                     
@@ -114,13 +114,13 @@ int main() {
                     lastMousePos = mouseEvent->position;
 
                     if(selectedBody){
-                        if(mouseEvent->button == sf::Mouse::Button::Left && state == AppState::EDITOR){
+                        if(mouseEvent->button == sf::Mouse::Button::Left && mode == AppMode::EDITOR){
                             isDragging = true;
                             isCameraFollowing = false;
                             dragOffset = selectedBody->pos - mousePos;
-                        }else if(mouseEvent->button == sf::Mouse::Button::Right && state == AppState::EDITOR){
+                        }else if(mouseEvent->button == sf::Mouse::Button::Right && mode == AppMode::EDITOR){
                             isVelocityDragging = true;
-                        }else if(mouseEvent->button == sf::Mouse::Button::Right && state == AppState::SIMULATION){
+                        }else if(mouseEvent->button == sf::Mouse::Button::Right && mode == AppMode::SIMULATION){
                             isPanning = true;
                         }
                     }else{
@@ -158,13 +158,13 @@ int main() {
 
         float width = ImGui::GetContentRegionAvail().x;
 
-        if (state == AppState::EDITOR) {
+        if (mode == AppMode::EDITOR) {
             if (ImGui::Button("PLAY", ImVec2(width * 0.3f, 30))) {
-                state = AppState::SIMULATION;
+                mode = AppMode::SIMULATION;
             }
         } else {
             if (ImGui::Button("PAUSE", ImVec2(width * 0.3f, 30))) {
-                state = AppState::EDITOR;
+                mode = AppMode::EDITOR;
             }
         }
 
@@ -269,7 +269,7 @@ int main() {
                     selectedBody = nullptr;
 
                     initialState = Serializer::serialize(engine);
-                    state = AppState::EDITOR;
+                    mode = AppMode::EDITOR;
                 }
             }
         }
@@ -391,6 +391,11 @@ int main() {
                 selectedBody->setMass(mass);
             }
 
+            float charge = selectedBody->charge;
+            if(ImGui::DragFloat("Charge", &charge, 1.0f, 0.0f, 0.0f)){
+                selectedBody->charge = charge;
+            }
+
             float restitution = selectedBody->restitution;
             if (ImGui::SliderFloat("Bounciness", &restitution, 0.0f, 1.0f)) {
                 selectedBody->restitution = restitution;
@@ -418,7 +423,7 @@ int main() {
 
         float dt = clock.restart().asSeconds();
         
-        if(state == AppState::SIMULATION){
+        if(mode == AppMode::SIMULATION){
             engine.update(dt);
             profiler.update(dt);
         }
@@ -426,7 +431,7 @@ int main() {
         sf::Vector2i mouse = sf::Mouse::getPosition(window);
         Vector2d mousePos = renderer.screenToReal({mouse.x, mouse.y});
 
-        if(state == AppState::EDITOR && selectedBody) {
+        if(mode == AppMode::EDITOR && selectedBody) {
             if(isDragging){
                 selectedBody->pos = mousePos + dragOffset;
             }else if(isVelocityDragging){
