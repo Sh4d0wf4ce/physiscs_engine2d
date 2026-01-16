@@ -31,6 +31,7 @@ int main() {
     PhysicsEngine engine;
     AppMode mode = AppMode::EDITOR;
     Body* selectedBody = nullptr;
+    Body* clipboard = nullptr;
 
     Renderer renderer(window);
     Profiler profiler;
@@ -81,30 +82,35 @@ int main() {
 
             if(!keyboardOnUI && !mouseOnUI){
                 if(const auto& keyEvent = event->getIf<sf::Event::KeyPressed>()){
-                    switch (keyEvent->code)
-                    {
-                    case sf::Keyboard::Key::Space:
+                    if(keyEvent->code == sf::Keyboard::Key::Space){
                         if(mode ==  AppMode::EDITOR){
                             mode = AppMode::SIMULATION;
                         }else{
                             mode = AppMode::EDITOR;
                         }
-                        break;
-                    
-                    case sf::Keyboard::Key::R:
+                    }else if(keyEvent->code == sf::Keyboard::Key::R){
                         selectedBody = nullptr;
+                        clipboard = nullptr;
                         renderer.setCameraPos({0,0});
                         Serializer::deserialize(engine, initialState);
-                        break;
-                    
-                    case sf::Keyboard::Key::F:
+                    }else if(keyEvent->code == sf::Keyboard::Key::F){
                         if(selectedBody)
                             isCameraFollowing = !isCameraFollowing;
                         else
                             isCameraFollowing = false;
-                        break;
-                    default:
-                        break;
+                    }else if(keyEvent->code == sf::Keyboard::Key::C && keyEvent->control){
+                        if(selectedBody){
+                            clipboard = selectedBody;
+                        }
+                    }else if(keyEvent->code == sf::Keyboard::Key::V && keyEvent->control){
+                        if(clipboard){
+                            Body* newBody = new Body(*clipboard);
+                            sf::Vector2i mouseScreenPos = sf::Mouse::getPosition(window);
+                            std::cout<<"Mouse screen position: ("<<mouseScreenPos.x<<", "<<mouseScreenPos.y<<")\n";
+                            newBody->pos = renderer.screenToReal({mouseScreenPos.x, mouseScreenPos.y});
+                            std::cout<<"Mouse world position: "<<newBody->pos<<"\n";
+                            engine.addBody(newBody);
+                        }
                     }
                 }
 
@@ -267,6 +273,7 @@ int main() {
                     Serializer::loadFromFile(path, engine);
 
                     selectedBody = nullptr;
+                    clipboard = nullptr;
 
                     initialState = Serializer::serialize(engine);
                     mode = AppMode::EDITOR;
