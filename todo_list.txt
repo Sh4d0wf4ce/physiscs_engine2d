@@ -1,4 +1,3 @@
-- naprawić CircleBoxCollision (tunelowanie, ma znaczenie co jest pierwsze w kolejce obiektow a nie powinno)
 - lepsza metoda integracji kroku czasowego
 - testy
 - poprawić wszędzie na 0.0f
@@ -16,4 +15,7 @@
 - rozmiary aplikacji
 - problem z wykrywaniem klikanai obiektow, przy większych promieniach
 - czy nie zmienić całej klasy renderer na statyczna
+- System statycznych obiektow, ujemna masa? (jesli tak nie powinna odpychac grawitacyjnie)
+- CircleBoxCollision przenika i zle sie odbija od rogów
+- naprawić CircleBoxCollision (tunelowanie, ma znaczenie co jest pierwsze w kolejce obiektow a nie powinno)
 - opcjonalnie sterowanie czasem:

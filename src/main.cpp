@@ -22,6 +22,13 @@ static void HelpMarker(const char* desc){
     }
 }
 
+bool isBodySelected(const std::vector<Body*>& bodies, Body* b){
+    for(Body* body: bodies){
+        if(body == b) return true;
+    }
+    return false;
+}
+
 int main() {
     sf::RenderWindow window(sf::VideoMode({Config::WINDOW_WIDTH, Config::WINDOW_HEIGHT}), "Physics Engine 2D");
     window.setFramerateLimit(60);
@@ -30,8 +37,8 @@ int main() {
 
     PhysicsEngine engine;
     AppMode mode = AppMode::EDITOR;
-    Body* selectedBody = nullptr;
-    Body* clipboard = nullptr;
+    std::vector<Body*> selectedBodies;
+    std::vector<Body*> clipboard;
 
     Renderer renderer(window);
     Profiler profiler;
@@ -67,9 +74,10 @@ int main() {
     bool isDragging = false;
     bool isVelocityDragging = false;
     bool isPanning = false;
+    bool isSelectingBox = false;
 
+    Vector2d boxStartPos = {0, 0};
     sf::Vector2i lastMousePos;
-    Vector2d dragOffset = {0, 0};
 
     while(window.isOpen()){
         while (const std::optional event = window.pollEvent()){
@@ -89,57 +97,122 @@ int main() {
                             mode = AppMode::EDITOR;
                         }
                     }else if(keyEvent->code == sf::Keyboard::Key::R){
-                        selectedBody = nullptr;
-                        clipboard = nullptr;
+                        selectedBodies.clear();
                         renderer.setCameraPos({0,0});
                         Serializer::deserialize(engine, initialState);
                     }else if(keyEvent->code == sf::Keyboard::Key::F){
-                        if(selectedBody)
+                        if(selectedBodies.size() == 1)
                             isCameraFollowing = !isCameraFollowing;
                         else
                             isCameraFollowing = false;
                     }else if(keyEvent->code == sf::Keyboard::Key::C && keyEvent->control){
-                        if(selectedBody){
-                            clipboard = selectedBody;
+                        if(!selectedBodies.empty()){
+                            for(Body* b: clipboard) delete b;
+                            clipboard.clear();
+
+                            for(Body* b: selectedBodies) clipboard.push_back(b->clone());
+                            
                         }
                     }else if(keyEvent->code == sf::Keyboard::Key::V && keyEvent->control){
-                        if(clipboard){
-                            Body* newBody = new Body(*clipboard);
+                        if(!clipboard.empty()){
+                            Vector2d groupCenter = {0, 0};
+                            for(Body* b: clipboard) groupCenter = groupCenter + b->pos;
+                            groupCenter = groupCenter / float(clipboard.size());
+
                             sf::Vector2i mouseScreenPos = sf::Mouse::getPosition(window);
-                            std::cout<<"Mouse screen position: ("<<mouseScreenPos.x<<", "<<mouseScreenPos.y<<")\n";
-                            newBody->pos = renderer.screenToReal({mouseScreenPos.x, mouseScreenPos.y});
-                            std::cout<<"Mouse world position: "<<newBody->pos<<"\n";
-                            engine.addBody(newBody);
+                            Vector2d mousePos = renderer.screenToReal({mouseScreenPos.x, mouseScreenPos.y});
+                            Vector2d offset = mousePos - groupCenter;
+
+                            selectedBodies.clear();
+
+                            for(Body* b: clipboard){
+                                Body* newBody = b->clone();
+                                newBody->pos += offset;
+                                engine.addBody(newBody);
+                                selectedBodies.push_back(newBody);
+                            }
                         }
                     }
                 }
 
                 if(const auto& mouseEvent = event->getIf<sf::Event::MouseButtonPressed>()){
                     Vector2d mousePos = renderer.screenToReal({mouseEvent->position.x, mouseEvent->position.y});
-                    selectedBody = engine.findBodyAt(mousePos);
+                    Body* clickedBody = engine.findBodyAt(mousePos);
                     lastMousePos = mouseEvent->position;
 
-                    if(selectedBody){
-                        if(mouseEvent->button == sf::Mouse::Button::Left && mode == AppMode::EDITOR){
-                            isDragging = true;
+                    if(mouseEvent->button == sf::Mouse::Button::Left){
+                        if(clickedBody){
+                            if(mode == AppMode::EDITOR){
+                                bool ctrlPressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl);
+    
+                                if(ctrlPressed){
+                                    if(isBodySelected(selectedBodies, clickedBody)){
+                                        selectedBodies.erase(std::remove(selectedBodies.begin(), selectedBodies.end(), clickedBody), selectedBodies.end());
+                                    }else{
+                                        selectedBodies.push_back(clickedBody);
+                                    }
+                                } else {
+                                    if(!isBodySelected(selectedBodies, clickedBody)){
+                                        selectedBodies.clear();
+                                        selectedBodies.push_back(clickedBody);
+                                    }
+                                }
+    
+                                isDragging = true;
+                            }else{
+                                selectedBodies.clear();
+                                selectedBodies.push_back(clickedBody);
+                                isDragging = false;
+                            }
+
                             isCameraFollowing = false;
-                            dragOffset = selectedBody->pos - mousePos;
-                        }else if(mouseEvent->button == sf::Mouse::Button::Right && mode == AppMode::EDITOR){
+                            isSelectingBox = false;
+                        }else{
+                            if(mode == AppMode::EDITOR){
+                                if(!sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl)){
+                                    selectedBodies.clear();
+                                }
+    
+                                isSelectingBox = true;
+                                boxStartPos = mousePos;
+                            }else{
+                                selectedBodies.clear();
+                                isSelectingBox = false;
+                            }
+
+                            isDragging = false;
+                        }
+                    }else if(mouseEvent->button == sf::Mouse::Button::Right){
+                        if (clickedBody && mode == AppMode::EDITOR) {
+                            selectedBodies.clear();
+                            selectedBodies.push_back(clickedBody);
                             isVelocityDragging = true;
-                        }else if(mouseEvent->button == sf::Mouse::Button::Right && mode == AppMode::SIMULATION){
+                        } else {
                             isPanning = true;
                         }
-                    }else{
-                        if(mouseEvent->button == sf::Mouse::Button::Left) selectedBody = nullptr;
-                        if(mouseEvent->button == sf::Mouse::Button::Right) isPanning = true;
-                        isDragging = false;
-                        isVelocityDragging = false;
                     }
                 }
 
                 if(const auto& mouseEvent = event->getIf<sf::Event::MouseButtonReleased>()){
+                    Vector2d mousePos = renderer.screenToReal({mouseEvent->position.x, mouseEvent->position.y});
                     if(mouseEvent->button == sf::Mouse::Button::Left){
+                        if(isSelectingBox){
+                            float minX = std::min(boxStartPos.x, mousePos.x);
+                            float maxX = std::max(boxStartPos.x, mousePos.x);
+                            float minY = std::min(boxStartPos.y, mousePos.y);
+                            float maxY = std::max(boxStartPos.y, mousePos.y);
+
+                            for (Body* b : engine.getBodies()) {
+                                if (b->pos.x >= minX && b->pos.x <= maxX && b->pos.y >= minY && b->pos.y <= maxY){
+                                    if (!isBodySelected(selectedBodies, b)) {
+                                        selectedBodies.push_back(b);
+                                    }
+                                }
+                            }
+                        }
+
                         isDragging = false;
+                        isSelectingBox = false;
                     }
                     if(mouseEvent->button == sf::Mouse::Button::Right){
                         isVelocityDragging = false;
@@ -176,7 +249,7 @@ int main() {
 
         ImGui::SameLine();
         if (ImGui::Button("RESET", ImVec2(width * 0.3f, 30))) {
-            selectedBody = nullptr;
+            selectedBodies.clear();
             Serializer::deserialize(engine, initialState);
         }
 
@@ -272,8 +345,7 @@ int main() {
                     std::string path = "saves/" + files[selectedFileIndex];
                     Serializer::loadFromFile(path, engine);
 
-                    selectedBody = nullptr;
-                    clipboard = nullptr;
+                    selectedBodies.clear();
 
                     initialState = Serializer::serialize(engine);
                     mode = AppMode::EDITOR;
@@ -339,92 +411,155 @@ int main() {
         ImGui::End();
 
 
-        if (selectedBody != nullptr) {
+        if (!selectedBodies.empty()) {
             ImGui::Begin("Inspector");
 
-            const std::vector<Body*>& bodies = engine.getBodies();
-            int currentIndex = -1;
-            for(int i = 0; i < bodies.size(); i++){
-                if(bodies[i] == selectedBody){
-                    currentIndex = i;
-                    break;
+            if(selectedBodies.size() == 1){
+                const std::vector<Body*>& bodies = engine.getBodies();
+                Body* selectedBody = selectedBodies[0];
+                int currentIndex = -1;
+                for(int i = 0; i < bodies.size(); i++){
+                    if(bodies[i] == selectedBody){
+                        currentIndex = i;
+                        break;
+                    }
                 }
-            }
 
-            if(currentIndex != -1){
-                if(ImGui::ArrowButton("##left", ImGuiDir_Left)){
-                    currentIndex--;
-                    if(currentIndex < 0) currentIndex = bodies.size() - 1;
-                    selectedBody = bodies[currentIndex];
+                if(currentIndex != -1){
+                    if(ImGui::ArrowButton("##left", ImGuiDir_Left)){
+                        currentIndex--;
+                        if(currentIndex < 0) currentIndex = bodies.size() - 1;
+                        selectedBody = bodies[currentIndex];
+                    }
+                    
+                    ImGui::SameLine();
+                    ImGui::Text("Body %d / %d", currentIndex + 1, (int)bodies.size());
+                    ImGui::SameLine();
+                    
+                    if(ImGui::ArrowButton("##right", ImGuiDir_Right)){
+                        currentIndex++;
+                        if(currentIndex >= bodies.size()) currentIndex = 0;
+                        selectedBody = bodies[currentIndex];
+                    }
                 }
-                
+
                 ImGui::SameLine();
-                ImGui::Text("Body %d / %d", currentIndex + 1, (int)bodies.size());
-                ImGui::SameLine();
+
+                if (isCameraFollowing) {
+                    ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.35f, 0.6f, 0.6f));
+                    if (ImGui::Button("LOCKED (F)")) isCameraFollowing = false;
+                    ImGui::PopStyleColor();
+                } else {
+                    if (ImGui::Button("Follow (F)")) isCameraFollowing = true;
+                }
+
+                ImGui::Separator();
+                    
+                ImGui::Separator();
+
+                float pos[2] = { selectedBody->pos.x, selectedBody->pos.y };
+                float vel[2] = { selectedBody->vel.x, selectedBody->vel.y };
+
+                if (ImGui::DragFloat2("Position", pos)) {
+                    selectedBody->pos = Vector2d(pos[0], pos[1]);
+                }
+                if (ImGui::DragFloat2("Velocity", vel)) {
+                    selectedBody->vel = Vector2d(vel[0], vel[1]);
+                }
+
+                float mass = selectedBody->getMass();
+                if (ImGui::DragFloat("Mass", &mass, 1.0f, 0.1f, 10000.0f)) {
+                    selectedBody->setMass(mass);
+                }
+
+                float charge = selectedBody->charge;
+                if(ImGui::DragFloat("Charge", &charge, 1.0f, 0.0f, 0.0f)){
+                    selectedBody->charge = charge;
+                }
+
+                float restitution = selectedBody->restitution;
+                if (ImGui::SliderFloat("Bounciness", &restitution, 0.0f, 1.0f)){
+                    selectedBody->restitution = restitution;
+                }
                 
-                if(ImGui::ArrowButton("##right", ImGuiDir_Right)){
-                    currentIndex++;
-                    if(currentIndex >= bodies.size()) currentIndex = 0;
-                    selectedBody = bodies[currentIndex];
+                ImGui::Separator();
+                if (selectedBody->collider->shapeType == CIRCLE){
+                    CircleCollider* c = static_cast<CircleCollider*>(selectedBody->collider);
+                    ImGui::DragFloat("Radius", &c->r, 0.5f, 1.0f, 500.0f);
+                } 
+                else if (selectedBody->collider->shapeType == BOX){
+                    BoxCollider* b = static_cast<BoxCollider*>(selectedBody->collider);
+                    ImGui::DragFloat("Width", &b->width, 1.0f, 1.0f, 1000.0f);
+                    ImGui::DragFloat("Height", &b->height, 1.0f, 1.0f, 1000.0f);
+                }
+                
+                ImGui::Separator();
+                if (ImGui::Button("Delete Body", ImVec2(-1, 0))){
+                    engine.removeBody(selectedBody);
+                    selectedBodies.clear();
+                }
+            }else{
+                ImGui::Text("%d objects selected", (int)selectedBodies.size());
+
+                bool allCircles = true;
+                bool allBoxes = true;
+                
+                for (Body* b : selectedBodies){
+                    if (b->collider->shapeType != CIRCLE) allCircles = false;
+                    if (b->collider->shapeType != BOX) allBoxes = false;
+                }
+
+                ImGui::Separator();
+
+                float commonMass = selectedBodies[0]->getMass();
+                if (ImGui::DragFloat("Mass (All)", &commonMass, 1.0f, 0.1f, 10000.0f)){
+                    for(Body* b: selectedBodies) b->setMass(commonMass);
+                }
+                
+                float commonRestitution = selectedBodies[0]->restitution;
+                if (ImGui::SliderFloat("Bounciness (All)", &commonRestitution, 0.0f, 1.0f)){
+                    for (Body* b : selectedBodies) b->restitution = commonRestitution;
+                }
+
+                float commonCharge = selectedBodies[0]->charge;
+                if (ImGui::DragFloat("Charge (All)", &commonCharge, 1.0f, -1000.0f, 1000.0f)){
+                    for (Body* b : selectedBodies) b->charge = commonCharge;
+                }
+
+                ImGui::Separator();
+
+                if (allCircles) {
+                    float r = static_cast<CircleCollider*>(selectedBodies[0]->collider)->r;
+                    if (ImGui::DragFloat("Radius (All)", &r, 0.5f, 1.0f, 500.0f)) {
+                        for (Body* b : selectedBodies) {
+                            static_cast<CircleCollider*>(b->collider)->r = r;
+                        }
+                    }
+                }else if (allBoxes){
+                    BoxCollider* col = static_cast<BoxCollider*>(selectedBodies[0]->collider);
+                    float w = col->width;
+                    float h = col->height;
+                    
+                    bool changed = false;
+                    changed |= ImGui::DragFloat("Width (All)", &w, 1.0f, 1.0f, 1000.0f);
+                    changed |= ImGui::DragFloat("Height (All)", &h, 1.0f, 1.0f, 1000.0f);
+
+                    if (changed) {
+                        for (Body* b : selectedBodies) {
+                            BoxCollider* box = static_cast<BoxCollider*>(b->collider);
+                            box->width = w;
+                            box->height = h;
+                        }
+                    }
+                }
+                
+                ImGui::Separator();
+                
+                if (ImGui::Button("Delete All Selected", ImVec2(-1, 0))) {
+                    for(Body* b: selectedBodies) engine.removeBody(b);
+                    selectedBodies.clear();
                 }
             }
-
-            ImGui::SameLine();
-
-            if (isCameraFollowing) {
-                ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.35f, 0.6f, 0.6f));
-                if (ImGui::Button("LOCKED (F)")) isCameraFollowing = false;
-                ImGui::PopStyleColor();
-            } else {
-                if (ImGui::Button("Follow (F)")) isCameraFollowing = true;
-            }
-
-            ImGui::Separator();
-                
-            ImGui::Separator();
-
-            float pos[2] = { selectedBody->pos.x, selectedBody->pos.y };
-            float vel[2] = { selectedBody->vel.x, selectedBody->vel.y };
-
-            if (ImGui::DragFloat2("Position", pos)) {
-                selectedBody->pos = Vector2d(pos[0], pos[1]);
-            }
-            if (ImGui::DragFloat2("Velocity", vel)) {
-                selectedBody->vel = Vector2d(vel[0], vel[1]);
-            }
-
-            float mass = selectedBody->getMass();
-            if (ImGui::DragFloat("Mass", &mass, 1.0f, 0.1f, 10000.0f)) {
-                selectedBody->setMass(mass);
-            }
-
-            float charge = selectedBody->charge;
-            if(ImGui::DragFloat("Charge", &charge, 1.0f, 0.0f, 0.0f)){
-                selectedBody->charge = charge;
-            }
-
-            float restitution = selectedBody->restitution;
-            if (ImGui::SliderFloat("Bounciness", &restitution, 0.0f, 1.0f)) {
-                selectedBody->restitution = restitution;
-            }
-            
-            ImGui::Separator();
-            if (selectedBody->collider->shapeType == CIRCLE) {
-                CircleCollider* c = static_cast<CircleCollider*>(selectedBody->collider);
-                ImGui::DragFloat("Radius", &c->r, 0.5f, 1.0f, 500.0f);
-            } 
-            else if (selectedBody->collider->shapeType == BOX) {
-                BoxCollider* b = static_cast<BoxCollider*>(selectedBody->collider);
-                ImGui::DragFloat("Width", &b->width, 1.0f, 1.0f, 1000.0f);
-                ImGui::DragFloat("Height", &b->height, 1.0f, 1.0f, 1000.0f);
-            }
-            
-            ImGui::Separator();
-            if (ImGui::Button("Delete Body", ImVec2(-1, 0))) {
-                engine.removeBody(selectedBody);
-                selectedBody = nullptr;
-            }
-
             ImGui::End();
         }
 
@@ -438,10 +573,16 @@ int main() {
         sf::Vector2i mouse = sf::Mouse::getPosition(window);
         Vector2d mousePos = renderer.screenToReal({mouse.x, mouse.y});
 
-        if(mode == AppMode::EDITOR && selectedBody) {
-            if(isDragging){
-                selectedBody->pos = mousePos + dragOffset;
-            }else if(isVelocityDragging){
+        if(mode == AppMode::EDITOR) {
+            if(isDragging && !selectedBodies.empty()){
+                Vector2d prevMouseWorld = renderer.screenToReal({lastMousePos.x, lastMousePos.y});
+                Vector2d delta = mousePos - prevMouseWorld;
+
+                for(Body* b: selectedBodies) {
+                    b->pos += delta;
+                }
+            }else if(isVelocityDragging && selectedBodies.size() == 1){
+                Body* selectedBody = selectedBodies[0];
                 selectedBody->vel = -1*(mousePos - selectedBody->pos);
             }
         }
@@ -456,15 +597,21 @@ int main() {
             lastMousePos = mouse;
         }
 
-        if(isCameraFollowing && selectedBody){
-            renderer.setCameraPos(selectedBody->pos);
+        if(isCameraFollowing && selectedBodies.size() == 1){
+            renderer.setCameraPos(selectedBodies[0]->pos);
         }
+
+        lastMousePos = mouse;
 
         window.clear(Config::COLOR_BACKGROUND);
         renderer.render(engine, profiler.getDebugInfo(engine));
 
-        if(selectedBody){
-           renderer.drawSelection(*selectedBody);
+        if(isSelectingBox) {
+            renderer.drawSelectionBox(boxStartPos, mousePos);
+        }
+        
+        for(Body* b: selectedBodies){
+           renderer.drawSelection(*b);
         }
 
         ImGui::SFML::Render(window);

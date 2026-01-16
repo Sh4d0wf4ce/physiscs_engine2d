@@ -18,6 +18,7 @@ public:
     Renderer(sf::RenderWindow& window): window(window), cameraPos({0,0}) {}
     void render(const PhysicsEngine& engine, std::string debugInfo = "");
     void drawSelection(const Body& body);
+    void drawSelectionBox(const Vector2d& start, const Vector2d& current);
     Vector2d screenToReal(const Vector2d& pos);
     Vector2d realToScreen(const Vector2d& pos);
     void setCameraPos(const Vector2d& pos) {cameraPos = pos;}

@@ -144,6 +144,19 @@ void Renderer::drawSelection(const Body& body){
     window.draw(*shape);
 }
 
+void Renderer::drawSelectionBox(const Vector2d& start, const Vector2d& current){
+    Vector2d startScreen = realToScreen(start);
+    Vector2d currScreen = realToScreen(current);
+
+    sf::RectangleShape rect({currScreen.x - startScreen.x, currScreen.y - startScreen.y});
+    rect.setPosition({startScreen.x, startScreen.y});
+    rect.setFillColor(sf::Color(0, 100, 255, 50));
+    rect.setOutlineColor(sf::Color(0, 100, 255, 200));
+    rect.setOutlineThickness(1.0f);
+
+    window.draw(rect);
+}
+
 void Renderer::drawVector(const Vector2d& start, const Vector2d& vector){
     if(vector.lengthSquared() < 0.1f) return;
     
