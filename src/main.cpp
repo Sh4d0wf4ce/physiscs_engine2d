@@ -556,8 +556,11 @@ int main() {
                 } 
                 else if (selectedBody->collider->shapeType == BOX){
                     BoxCollider* b = static_cast<BoxCollider*>(selectedBody->collider);
-                    ImGui::DragFloat("Width", &b->width, 1.0f, 1.0f, 1000.0f);
-                    ImGui::DragFloat("Height", &b->height, 1.0f, 1.0f, 1000.0f);
+                    float bodySize[2] = {b->width, b->height};
+                    if(ImGui::DragFloat2("Width/Height", bodySize, 1.0f, 1.0f, 1000.0f)){
+                        b->width = bodySize[0];
+                        b->height = bodySize[1];
+                    }
                 }
                 
                 ImGui::Separator();

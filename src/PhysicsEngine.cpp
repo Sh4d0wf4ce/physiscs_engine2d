@@ -86,21 +86,14 @@ CollisionManifold PhysicsEngine::checkCollision(Body* b1, Body* b2){
     
     if(type1 == CIRCLE && type2 == CIRCLE){
         return interesectCircleCircle(b1, b2);
-    }else if((type1 == BOX && type2 == CIRCLE) || (type1 == CIRCLE && type2 == BOX)){
-        Body* box;
-        Body* circle;
-        
-        if(b1->collider->shapeType == BOX){
-            box = b1;
-            circle = b2;
-        }else{
-            box = b2;
-            circle = b1;
-        }
-
-        return interesectCircleBox(circle, box);
     }else if(type1 == BOX && type2 == BOX){
         return intersectBoxBox(b1, b2);
+    }else if(type1 == BOX && type2 == CIRCLE){
+        return interesectCircleBox(b2, b1);
+    }else if(type1 == CIRCLE && type2 == BOX){
+        CollisionManifold m = interesectCircleBox(b1, b2);
+        m.normal *= -1.0f;
+        return m;
     }
 
     return CollisionManifold{false, Vector2d(0,0), 0};
@@ -143,48 +136,45 @@ CollisionManifold PhysicsEngine::intersectBoxBox(Body* b1, Body* b2){
 }
 
 CollisionManifold PhysicsEngine::interesectCircleBox(Body* circle, Body* box){
+    CollisionManifold m{false, {0,0}, 0.0f};
+
     BoxCollider* boxColl = static_cast<BoxCollider*>(box->collider);
     CircleCollider* circleColl = static_cast<CircleCollider*>(circle->collider);
 
     Vector2d circlePos = circle->pos;
     Vector2d boxPos = box->pos;
+    Vector2d relativePos = circlePos - boxPos;
 
-    float minX = boxPos.x - boxColl->width / 2;
-    float maxX = boxPos.x + boxColl->width / 2;
-    float minY = boxPos.y - boxColl->height / 2;
-    float maxY = boxPos.y + boxColl->height / 2;
+    float hx = boxColl->width / 2.0f;
+    float hy = boxColl->height / 2.0f;
+    float clampedX = std::clamp(relativePos.x, -hx, hx);
+    float clampedY = std::clamp(relativePos.y, -hy, hy);
 
-    Vector2d closestPoint;
-    closestPoint.x = std::clamp(circlePos.x, minX, maxX);
-    closestPoint.y = std::clamp(circlePos.y, minY, maxY);
+    Vector2d closestPoint(clampedX, clampedY);
+    Vector2d normal = relativePos - closestPoint;
 
-    Vector2d dist = circlePos - closestPoint;
-    if(dist.length() > circleColl->r)
-        return CollisionManifold{false, Vector2d(0,0), 0};
+    float dist = normal.length();
+    float r = circleColl->r;
+
+    bool inside = (relativePos == closestPoint);
     
-    float distLen = dist.length();
-    CollisionManifold m;
-    m.isColliding = true;
+    if(inside){
+        m.isColliding = true;
+        
+        float dx = std::abs(relativePos.x) - hx;
+        float dy = std::abs(relativePos.y) - hy;
 
-    if(distLen == 0.0f){
-        float dLeft = circlePos.x - minX;
-        float dRight = maxX - circlePos.x;
-        float dTop = circlePos.y - minY;
-        float dBottom = maxY - circlePos.y;
-
-        float minDistX = std::min(dLeft, dRight);
-        float minDistY = std::min(dTop, dBottom);
-
-        if(minDistX < minDistY){
-            m.depth = circleColl->r + minDistX;
-            m.normal = (dLeft < dRight) ? Vector2d(1, 0) : Vector2d(-1, 0);
+        if(dx > dy){
+            m.normal = (relativePos.x > 0) ? Vector2d(1,0) : Vector2d(-1, 0);
+            m.depth = r - dx;
         }else{
-            m.depth = circleColl->r + minDistY;
-            m.normal = (dTop < dBottom) ? Vector2d(0, 1) : Vector2d(0, -1);
+            m.normal = (relativePos.y > 0) ? Vector2d(0, 1) : Vector2d(0, -1);
+            m.depth = r - dy;
         }
-    }else{
-        m.normal = dist.normalize();
-        m.depth = circleColl->r - distLen;
+    }else if(dist < r){
+        m.isColliding = true;
+        m.normal = (dist != 0) ? (normal / dist) : Vector2d(0, 1);
+        m.depth = r - dist;
     }
 
     return m;
@@ -192,24 +182,35 @@ CollisionManifold PhysicsEngine::interesectCircleBox(Body* circle, Body* box){
 
 
 void PhysicsEngine::handleWallCollision(Body* b){
-    CircleCollider* coll = static_cast<CircleCollider*>(b->collider);
-    if(b->pos.x - coll->r < -simWidth/2.0f){
-        b->pos.x = -simWidth/2.0f + coll->r;
+    float halfWidth = 0.0f;
+    float halfHeight = 0.0f;
+
+    if (b->collider->shapeType == CIRCLE) {
+        float r = static_cast<CircleCollider*>(b->collider)->r;
+        halfWidth = r;
+        halfHeight = r;
+    } else if (b->collider->shapeType == BOX) {
+        BoxCollider* box = static_cast<BoxCollider*>(b->collider);
+        halfWidth = box->width / 2.0f;
+        halfHeight = box->height / 2.0f;
+    }
+    
+    if (b->pos.x - halfWidth < -simWidth / 2.0f) {
+        b->pos.x = -simWidth / 2.0f + halfWidth;
+        b->vel.x *= -1;
+        b->vel *= b->restitution;
+    }else if (b->pos.x + halfWidth > simWidth / 2.0f) {
+        b->pos.x = simWidth / 2.0f - halfWidth;
         b->vel.x *= -1;
         b->vel *= b->restitution;
     }
-    if(b->pos.x + coll->r > simWidth/2.0f){
-        b->pos.x = simWidth/2.0f - coll->r;
-        b->vel.x *= -1;
-        b->vel *= b->restitution;
-    }
-    if(b->pos.y + coll->r > simHeight/2.0f){
-        b->pos.y = simHeight/2.0f - coll->r;
+
+    if (b->pos.y + halfHeight > simHeight / 2.0f) {
+        b->pos.y = simHeight / 2.0f - halfHeight;
         b->vel.y *= -1;
         b->vel *= b->restitution;
-    }
-    if(b->pos.y - coll->r < -simHeight/2.0f){
-        b->pos.y = -simHeight/2.0f + coll->r;
+    }else if (b->pos.y - halfHeight < -simHeight / 2.0f) {
+        b->pos.y = -simHeight / 2.0f + halfHeight;
         b->vel.y *= -1;
         b->vel *= b->restitution;
     }

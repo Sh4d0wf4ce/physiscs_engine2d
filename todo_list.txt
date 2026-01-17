@@ -6,12 +6,7 @@
 - naprawić gitignore
 - dokumentacja
 
-
-- rozmieszczenie sensowne paneli i zablokowanie ich ruszania
-- rozmiary aplikacji
-- CircleBoxCollision przenika i zle sie odbija od rogów
-- naprawić CircleBoxCollision (tunelowanie, ma znaczenie co jest pierwsze w kolejce obiektow a nie powinno)
-
+- boxy (nakladaja sile tylko od swojego srodka, nie da się np. zrobić plytki naladowanej dodatnio)
 
 - co powinno się zapisywać a co nie (zarówno pliki jak i save state)
 - zapis scen w assetach a nie w glownym folderze

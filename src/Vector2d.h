@@ -18,6 +18,7 @@ public:
     Vector2d& operator/=(float a) {if(a != 0){ x /= a; y /= a;} return *this; }
     Vector2d operator*(float a) const {return Vector2d(x*a, y*a);}
     Vector2d operator/(float a) const {if(a != 0) return Vector2d(x/a, y/a); return Vector2d();}
+    bool operator==(const Vector2d& v2) const {return (x==v2.x && y==v2.y);}
 
     float dot(const Vector2d& v2) const {return x*v2.x + y*v2.y;}
     float length() const {return std::sqrt(x*x + y*y);}
