@@ -20,7 +20,7 @@ public:
     int trailcounter = 0;
 
     Body(const Vector2d& pos = Vector2d(0, 0), const Vector2d& vel = Vector2d(0, 0), float mass = 1, float restitution = 1, float charge = 0, Collider* collider = nullptr)
-        : pos(pos), vel(vel), force(0, 0), restitution(restitution), charge(charge), collider(collider) { setMass(mass);}
+        : invMass(1.0f/mass), mass(mass), pos(pos), vel(vel), force(0, 0), restitution(restitution), charge(charge), collider(collider) {}
     ~Body() {delete collider;}
 
     Body* clone() const;
@@ -32,6 +32,9 @@ public:
     void setMass(float m);
     float getMass() const { return mass; }
     float getInvMass() const { return invMass; }
+
+    bool isStatic() const {return invMass == 0;}
+    void setStatic(bool isStatic);
 };
 
 #endif

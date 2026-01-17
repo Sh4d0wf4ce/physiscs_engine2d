@@ -1,5 +1,4 @@
 - lepsza metoda integracji kroku czasowego
-- testy
 - poprawić wszędzie na 0.0f
 - opcjonalnie smart pointery
 - .vscode sprawdzić co tam jest i po co
@@ -7,15 +6,14 @@
 - naprawić gitignore
 - dokumentacja
 
-- global gravity (zmienić slider żeby poprawna wartość zmienial)
-- uporzdkowanie if/else w eventach
-- dodanie przykładowych scen
-- profiler (czy wogle jest potrzebny)
+
 - rozmieszczenie sensowne paneli i zablokowanie ich ruszania
 - rozmiary aplikacji
-- problem z wykrywaniem klikanai obiektow, przy większych promieniach
-- czy nie zmienić całej klasy renderer na statyczna
-- System statycznych obiektow, ujemna masa? (jesli tak nie powinna odpychac grawitacyjnie)
 - CircleBoxCollision przenika i zle sie odbija od rogów
 - naprawić CircleBoxCollision (tunelowanie, ma znaczenie co jest pierwsze w kolejce obiektow a nie powinno)
+
+
+- co powinno się zapisywać a co nie (zarówno pliki jak i save state)
+- zapis scen w assetach a nie w glownym folderze
+- dodanie przykładowych scen
 - opcjonalnie sterowanie czasem:

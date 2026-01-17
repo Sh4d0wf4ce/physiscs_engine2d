@@ -8,7 +8,7 @@ json Serializer::serialize(const PhysicsEngine& engine){
 
     j["settings"] = {
         {"G", Config::G},
-        {"scale", Config::SCALE},
+        {"scale", Config::scale},
         {"useGravity", Config::useGravity},
         {"useNBodyGravity", Config::useNBodyGravity},
         {"useElectrostatics", Config::useElectrostatics},
@@ -26,6 +26,7 @@ json Serializer::serialize(const PhysicsEngine& engine){
         b["mass"] = body->getMass();
         b["restitution"] = body->restitution;
         b["charge"] = body->charge;
+        b["isStatic"] = body->isStatic();
 
         if (body->collider->shapeType == CIRCLE) {
             b["type"] = "CIRCLE";
@@ -47,7 +48,7 @@ void Serializer::deserialize(PhysicsEngine& engine, const json& j){
     if(j.contains("settings")){
         json s = j["settings"];
         Config::G = s.value("G", 1000.0f);
-        Config::SCALE = s.value("scale", 50.0f);
+        Config::scale = s.value("scale", 50.0f);
         Config::useGravity = s.value("useGravity", true);
         Config::useNBodyGravity = s.value("useNBodyGravity", false);
         Config::useElectrostatics = s.value("useElectrostatics", false);
@@ -68,6 +69,7 @@ void Serializer::deserialize(PhysicsEngine& engine, const json& j){
             float mass = b.value("mass", 1.0f);
             float restitution = b.value("restitution", 1.0f);
             float charge = b.value("charge", 0.0f);
+            float isStatic = b.value("isStatic", false);
 
             Collider* collider = nullptr;
             std::string type = b.value("type", "CIRCLE");
@@ -81,6 +83,7 @@ void Serializer::deserialize(PhysicsEngine& engine, const json& j){
             }
 
             Body* body = new Body(pos, vel, mass, restitution, charge, collider);
+            if(isStatic) body->setStatic(true);
             engine.addBody(body);
         }
     }

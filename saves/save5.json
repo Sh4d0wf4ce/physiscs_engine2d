@@ -1,0 +1,75 @@
+{
+    "bodies": [
+        {
+            "charge": 100.0,
+            "mass": 10.0,
+            "pos": [
+                -40.0,
+                20.0
+            ],
+            "radius": 20.0,
+            "restitution": 0.800000011920929,
+            "type": "CIRCLE",
+            "vel": [
+                0.0,
+                0.0
+            ]
+        },
+        {
+            "charge": 100.0,
+            "mass": 10.0,
+            "pos": [
+                40.0,
+                -40.0
+            ],
+            "radius": 20.0,
+            "restitution": 0.800000011920929,
+            "type": "CIRCLE",
+            "vel": [
+                0.0,
+                0.0
+            ]
+        },
+        {
+            "charge": -100.0,
+            "mass": 10.0,
+            "pos": [
+                -40.0,
+                -40.0
+            ],
+            "radius": 20.0,
+            "restitution": 0.800000011920929,
+            "type": "CIRCLE",
+            "vel": [
+                0.0,
+                0.0
+            ]
+        },
+        {
+            "charge": -100.0,
+            "mass": 10.0,
+            "pos": [
+                40.0,
+                20.0
+            ],
+            "radius": 20.0,
+            "restitution": 0.800000011920929,
+            "type": "CIRCLE",
+            "vel": [
+                0.0,
+                0.0
+            ]
+        }
+    ],
+    "settings": {
+        "G": 1000.0,
+        "checkBodyCollisions": true,
+        "checkWindowCollisions": true,
+        "scale": 0.5559920072555542,
+        "simHeight": 980.5,
+        "simWidth": 980.0,
+        "useElectrostatics": true,
+        "useGravity": false,
+        "useNBodyGravity": false
+    }
+}

@@ -16,7 +16,7 @@ class Renderer{
     void drawVector(const Vector2d& start, const Vector2d& vec);
 public:
     Renderer(sf::RenderWindow& window): window(window), cameraPos({0,0}) {}
-    void render(const PhysicsEngine& engine, std::string debugInfo = "");
+    void render(const PhysicsEngine& engine);
     void drawSelection(const Body& body);
     void drawSelectionBox(const Vector2d& start, const Vector2d& current);
     Vector2d screenToReal(const Vector2d& pos);

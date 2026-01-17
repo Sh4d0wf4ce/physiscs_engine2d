@@ -4,14 +4,14 @@ void PhysicsEngine::update(float dt){
     //add forces
     for (Body* body : bodies) {
         if (body->getInvMass() == 0) continue;
-        if(Config::useGravity) body->applyForce(gravity * body->getMass());
+        if(Config::useGravity) body->applyForce(Vector2d({0, -Config::gravity}) * body->getMass());
     }
 
     applyNBodyForces();
 
-
     //update bodies
     for(Body* body: bodies){
+        if (body->getInvMass() == 0) continue;
         body->update(dt);
     }
 
@@ -215,83 +215,35 @@ void PhysicsEngine::handleWallCollision(Body* b){
     }
 }
 
-float PhysicsEngine::getKineticEnergy() const{
-    float energy = 0.0f;
-    for(const Body* body: bodies){
-        if(body->getInvMass() == 0) continue;
-        energy += 0.5f * body->getMass() * body->vel.lengthSquared();
-    }
-    return energy;
-}
-
-float PhysicsEngine::getPotentialEnergy() const{
-    float energy = 0.0f;
-    
-    if(Config::useGravity){
-        for(const Body* body: bodies){
-            if(body->getInvMass() == 0) continue;
-            energy -= body->getMass() * gravity.y * body->pos.y;
-            energy -= body->getMass() *  gravity.x * body->pos.x;
-        }
-    }
-
-    if(Config::useNBodyGravity || Config::useElectrostatics){
-        for (int i = 0; i < bodies.size(); i++)
-        {
-            for (int j = i + 1; j < bodies.size(); j++)
-            {
-                Body* b1 = bodies[i];
-                Body* b2 = bodies[j];
-
-                if(b1->getInvMass() == 0 && b2->getInvMass() == 0) continue;
-                Vector2d r = b2->pos - b1->pos;
-                float dist = r.length();
-                dist = std::max(dist, 0.001f);
-
-                if (Config::useNBodyGravity) {
-                    energy -= (Config::G * b1->getMass() * b2->getMass()) / dist;
-                }
-                
-                if(Config::useElectrostatics){
-                    energy += (Config::K * b1->charge * b2->charge) / dist;
-                }
-            }
-            
-        }
-        
-    }  
-
-    return energy;
-}
-
-Vector2d PhysicsEngine::getTotalMomentum() const{
-    Vector2d totalMomentum(0,0);
-    for(const Body* body: bodies){
-        if(body->getInvMass() == 0) continue;
-        totalMomentum += body->vel * body->getMass();
-    }
-    return totalMomentum;
-}
-
 
 Body* PhysicsEngine::findBodyAt(Vector2d pos){
-    float width, height;
-    float padding = 5.0f;
-
-    for(Body* b: bodies){
+    for (auto it = bodies.rbegin(); it != bodies.rend(); it++) {
+        Body* b = *it;
         Collider* col = b->collider;
-        if(col->shapeType == CIRCLE){
-            float r = static_cast<CircleCollider*>(col)->r;
-            width = r;
-            height = r;
-        }else if(col->shapeType == BOX){
-            BoxCollider* box = static_cast<BoxCollider*>(col);
-            width = box->width;
-            height = box->height;
-        }
+        float padding = 5.0f;
 
-        if((pos.x > b->pos.x - width/2.0f - padding && pos.x < b->pos.x + width/2 + padding) && (pos.y > b->pos.y - height/2.0f - padding && pos.y < b->pos.y + height/2 + padding))
-            return b;
+        if (col->shapeType == CIRCLE) {
+            float r = static_cast<CircleCollider*>(col)->r;
+            float rHit = r + padding;
+
+            Vector2d diff = pos - b->pos;
+            if (diff.lengthSquared() <= (rHit * rHit)) {
+                return b;
+            }
+        } 
+        else if (col->shapeType == BOX) {
+            BoxCollider* box = static_cast<BoxCollider*>(col);
+            float w = box->width;
+            float h = box->height;
+            
+            float halfW = (w / 2.0f) + padding;
+            float halfH = (h / 2.0f) + padding;
+
+            if (pos.x >= b->pos.x - halfW && pos.x <= b->pos.x + halfW &&
+                pos.y >= b->pos.y - halfH && pos.y <= b->pos.y + halfH) {
+                return b;
+            }
+        }
     }
 
     return nullptr;

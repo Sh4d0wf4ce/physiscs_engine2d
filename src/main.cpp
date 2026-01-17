@@ -5,7 +5,6 @@
 #include "Config.h"
 #include "PhysicsEngine.h"
 #include "Renderer.h"
-#include "Profiler.h"
 #include "Serializer.h"
 
 namespace fs = std::filesystem;
@@ -30,7 +29,15 @@ bool isBodySelected(const std::vector<Body*>& bodies, Body* b){
 }
 
 int main() {
-    sf::RenderWindow window(sf::VideoMode({Config::WINDOW_WIDTH, Config::WINDOW_HEIGHT}), "Physics Engine 2D");
+    sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
+    
+    unsigned int w = static_cast<unsigned int>(desktop.size.x * 0.8f);
+    unsigned int h = static_cast<unsigned int>(desktop.size.y * 0.8f);
+
+    sf::RenderWindow window(sf::VideoMode({w, h}), "Physics Engine 2D", sf::Style::Default);
+
+    window.setPosition({(desktop.size.x - w)/2, (desktop.size.y - h)/2});
+
     window.setFramerateLimit(60);
 
     if(!ImGui::SFML::Init(window)) return -1;
@@ -41,7 +48,6 @@ int main() {
     std::vector<Body*> clipboard;
 
     Renderer renderer(window);
-    Profiler profiler;
 
     if(!fs::exists("saves")){
         fs::create_directory("saves");
@@ -61,10 +67,9 @@ int main() {
     engine.addBody(planet3);
     
 
-    float simWidth = Config::WINDOW_WIDTH / Config::SCALE;
-    float simHeight = Config::WINDOW_HEIGHT / Config::SCALE;
+    float simWidth = Config::WINDOW_WIDTH / Config::scale;
+    float simHeight = Config::WINDOW_HEIGHT / Config::scale;
     engine.setSimBounds(simWidth, simHeight);
-    profiler.reset(engine);
     
     nlohmann::json initialState = Serializer::serialize(engine);
     sf::Clock clock;
@@ -75,6 +80,7 @@ int main() {
     bool isVelocityDragging = false;
     bool isPanning = false;
     bool isSelectingBox = false;
+    bool showPanel = true;
 
     Vector2d boxStartPos = {0, 0};
     sf::Vector2i lastMousePos;
@@ -84,6 +90,11 @@ int main() {
             ImGui::SFML::ProcessEvent(window, *event);
 
             if(event->is<sf::Event::Closed>()) window.close();
+
+            if(const auto* resized = event->getIf<sf::Event::Resized>()){
+                sf::FloatRect visibleArea({0, 0}, {resized->size.x, resized->size.y});
+                window.setView(sf::View(visibleArea));
+            }
 
             bool mouseOnUI = ImGui::GetIO().WantCaptureMouse;
             bool keyboardOnUI = ImGui::GetIO().WantCaptureKeyboard;
@@ -132,6 +143,8 @@ int main() {
                                 selectedBodies.push_back(newBody);
                             }
                         }
+                    }else if(keyEvent->code == sf::Keyboard::Key::Tab){
+                        showPanel = !showPanel;
                     }
                 }
 
@@ -223,196 +236,234 @@ int main() {
                 if(const auto& mouseEvent = event->getIf<sf::Event::MouseWheelScrolled>()){
                     float zoomFactor = 1.1f;
                     float multiplier = mouseEvent->delta > 0 ? zoomFactor : (1.0f / zoomFactor);
-                    Config::SCALE = std::clamp(Config::SCALE * multiplier, 0.1f, 100.0f);
+                    Config::scale = std::clamp(Config::scale * multiplier, 0.1f, 100.0f);
                 }
             }
         }
+
+        const ImGuiViewport* viewport = ImGui::GetMainViewport();
+        ImVec2 workPos = viewport->WorkPos;
+        ImVec2 workSize = viewport->WorkSize;
+        
+        float controlPanelWidth = 320.0f;
+        float inspectorWidth = 300.0f;
+        float inspectorHeight = 260.0f;
+        float padding = 10.0f;
+
+        ImGuiWindowFlags staticWindowFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
 
         ImGui::SFML::Update(window, deltaClock.restart());
 
-        ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_FirstUseEver);
-        ImGui::SetNextWindowSize(ImVec2(300, 500), ImGuiCond_FirstUseEver);
+        if(showPanel){
+            ImGui::SetNextWindowPos(workPos);
+            ImGui::SetNextWindowSize({controlPanelWidth, workSize.y});
 
-        ImGui::Begin("Control Panel");
+            ImGui::Begin("Control Panel", NULL, staticWindowFlags);
 
-        float width = ImGui::GetContentRegionAvail().x;
+            float width = ImGui::GetContentRegionAvail().x;
 
-        if (mode == AppMode::EDITOR) {
-            if (ImGui::Button("PLAY", ImVec2(width * 0.3f, 30))) {
-                mode = AppMode::SIMULATION;
-            }
-        } else {
-            if (ImGui::Button("PAUSE", ImVec2(width * 0.3f, 30))) {
-                mode = AppMode::EDITOR;
-            }
-        }
-
-        ImGui::SameLine();
-        if (ImGui::Button("RESET", ImVec2(width * 0.3f, 30))) {
-            selectedBodies.clear();
-            Serializer::deserialize(engine, initialState);
-        }
-
-        ImGui::SameLine();
-        if (ImGui::Button("SAVE STATE", ImVec2(width * 0.3f, 30))) {
-            initialState = Serializer::serialize(engine);
-        }
-
-        ImGui::Spacing();
-        ImGui::Separator();
-        ImGui::Spacing();
-
-        if (ImGui::Button("Add New Object...", ImVec2(-1, 40))) {
-            ImGui::OpenPopup("Create Object");
-        }
-
-
-        if (ImGui::CollapsingHeader("Physics Rules", ImGuiTreeNodeFlags_DefaultOpen)) {
-            ImGui::Checkbox("Check Body Collisions", &Config::useBodiesCollision);
-            ImGui::Checkbox("Check Wall Collisions", &Config::useWindowCollision);
-            
-            ImGui::Separator();
-            
-            ImGui::Checkbox("Global Gravity (Down)", &Config::useGravity);
-            ImGui::SameLine(); HelpMarker("Standard gravity pulling objects down (F = m*g)");
-            
-            if (Config::useGravity) {
-                ImGui::SliderFloat("G Constant", &Config::G, 0.0f, 2000.0f);
-            }
-
-            ImGui::Checkbox("N-Body Gravity", &Config::useNBodyGravity);
-            ImGui::SameLine(); HelpMarker("Orbital mechanics. Every object attracts every other object.");
-            
-            ImGui::Checkbox("Electrostatics", &Config::useElectrostatics);
-            ImGui::SameLine(); HelpMarker("Coulomb's Law. Objects need 'charge' to interact.");
-        }
-
-        if (ImGui::CollapsingHeader("World & View", ImGuiTreeNodeFlags_DefaultOpen)) {
-            ImGui::Text("Camera Zoom:");
-            ImGui::SliderFloat("##zoom", &Config::SCALE, 0.1f, 100.0f, "%.1f px/m", ImGuiSliderFlags_Logarithmic);
-            
-            ImGui::Text("Simulation Bounds (Meters):");
-            Vector2d bounds = engine.getSimBounds();
-            float size[2] = { bounds.x, bounds.y };
-            if (ImGui::DragFloat2("##bounds", size, 0.5f, 10.0f, 1000.0f)) {
-                engine.setSimBounds(size[0], size[1]);
-            }
-
-            ImGui::Separator();
-            ImGui::Checkbox("Show Trails", &Config::renderTrails);
-            ImGui::Checkbox("Show Boundaries", &Config::renderWorldBounds);
-            ImGui::Checkbox("Show Velocity Vectors", &Config::renderVelocityVectors);
-        }
-
-        if(ImGui::CollapsingHeader("Storage / Saves")){
-            ImGui::Text("Save to file: ");
-            ImGui::InputText(".json", saveFileName, IM_ARRAYSIZE(saveFileName));
-
-            if(ImGui::Button("Save", ImVec2(-1, 0))){
-                std::string path = "saves/" + std::string(saveFileName) + ".json";
-                Serializer::saveToFile(path, engine);
-            }
-
-            ImGui::Separator();
-            ImGui::Text("Load from file: ");
-
-            static int selectedFileIndex = -1;
-            std::vector<std::string> files;
-
-            if(fs::exists("saves")){
-                for(const auto& file: fs::directory_iterator("saves")){
-                    if(file.path().extension() == ".json"){
-                        files.push_back(file.path().filename().string());
-                    }
+            if (mode == AppMode::EDITOR) {
+                if (ImGui::Button("PLAY", ImVec2(width * 0.3f, 30))) {
+                    mode = AppMode::SIMULATION;
                 }
-            }
-
-            if(ImGui::BeginListBox("##files", ImVec2(-1, 100))){
-                for(int i = 0; i < files.size(); i++){
-                    const bool isSelected = (selectedFileIndex == i);
-                    if(ImGui::Selectable(files[i].c_str(), isSelected)){
-                        selectedFileIndex = i;
-                    }
-
-                    if(isSelected)
-                        ImGui::SetItemDefaultFocus();
-                }
-                ImGui::EndListBox();
-            }
-
-            if(ImGui::Button("Load", ImVec2(-1, 0))){
-                if(selectedFileIndex >= 0 && selectedFileIndex < files.size()){
-                    std::string path = "saves/" + files[selectedFileIndex];
-                    Serializer::loadFromFile(path, engine);
-
-                    selectedBodies.clear();
-
-                    initialState = Serializer::serialize(engine);
+            } else {
+                if (ImGui::Button("PAUSE", ImVec2(width * 0.3f, 30))) {
                     mode = AppMode::EDITOR;
                 }
             }
-        }
 
-        if (ImGui::BeginPopupModal("Create Object", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
-            static int newItemType = 0; // 0 = Circle, 1 = Box
-            static float newItemMass = 10.0f;
-            static float newItemSize[2] = { 20.0f, 20.0f };
-            static float newItemPos[2] = { 0.0f, 0.0f };
-            static float newItemVel[2] = { 0.0f, 0.0f };
-            static float newItemCharge = 0.0f;
-            static float newItemRestitution = 0.8f;
-
-            ImGui::Combo("Shape", &newItemType, "Circle\0Box\0");
-            
-            ImGui::Separator();
-
-            if (newItemType == 0) {
-                ImGui::InputFloat("Radius", &newItemSize[0]);
-            } else {
-                ImGui::InputFloat2("Width / Height", newItemSize);
-            }
-
-            ImGui::InputFloat("Mass", &newItemMass);
-            ImGui::InputFloat2("Position (m)", newItemPos);
-            ImGui::InputFloat2("Velocity (m/s)", newItemVel);
-            ImGui::SliderFloat("Bounciness", &newItemRestitution, 0.0f, 1.0f);
-            
-            if (Config::useElectrostatics) {
-                ImGui::InputFloat("Charge", &newItemCharge);
-            }
-
-            ImGui::Spacing();
-            ImGui::Separator();
-            ImGui::Spacing();
-
-            if (ImGui::Button("Create", ImVec2(120, 0))) {
-                Collider* col = nullptr;
-                if (newItemType == 0) col = new CircleCollider(newItemSize[0]);
-                else col = new BoxCollider(newItemSize[0], newItemSize[1]);
-
-                Body* b = new Body(Vector2d(newItemPos[0], newItemPos[1]), 
-                                Vector2d(newItemVel[0], newItemVel[1]), 
-                                newItemMass, newItemRestitution, newItemCharge, col);
-                
-                engine.addBody(b);
-                ImGui::CloseCurrentPopup();
-            }
-            
-            ImGui::SetItemDefaultFocus();
             ImGui::SameLine();
-            
-            if (ImGui::Button("Cancel", ImVec2(120, 0))) {
-                ImGui::CloseCurrentPopup();
+            if (ImGui::Button("RESET", ImVec2(width * 0.3f, 30))) {
+                selectedBodies.clear();
+                Serializer::deserialize(engine, initialState);
             }
 
-            ImGui::EndPopup();
+            ImGui::SameLine();
+            if (ImGui::Button("SAVE STATE", ImVec2(width * 0.3f, 30))) {
+                initialState = Serializer::serialize(engine);
+            }
+
+            ImGui::Spacing();
+            ImGui::Separator();
+            ImGui::Spacing();
+
+            if (ImGui::Button("Add New Object...", ImVec2(-1, 40))) {
+                ImGui::OpenPopup("Create Object");
+            }
+
+
+            if (ImGui::CollapsingHeader("Physics Rules", ImGuiTreeNodeFlags_DefaultOpen)) {
+                ImGui::Checkbox("Check Body Collisions", &Config::useBodiesCollision);
+                ImGui::Checkbox("Check Wall Collisions", &Config::useWindowCollision);
+                
+                ImGui::Separator();
+                
+                ImGui::Checkbox("Global Gravity (Down)", &Config::useGravity);
+                ImGui::SameLine(); HelpMarker("Standard gravity pulling objects down (F = m*g)");
+                
+                if (Config::useGravity) {
+                    ImGui::DragFloat("Gravity", &Config::gravity, 0.5f, -200.0f, 200.0f, "%.2f");
+                }
+
+                ImGui::Checkbox("N-Body Gravity", &Config::useNBodyGravity);
+                ImGui::SameLine(); HelpMarker("Orbital mechanics. Every object attracts every other object.");
+
+                if (Config::useNBodyGravity) {
+                    ImGui::DragFloat("G Constant", &Config::G, 10.0f, 1.0f, 10000.0f, "%.0f");
+                }
+                
+                ImGui::Checkbox("Electrostatics", &Config::useElectrostatics);
+                ImGui::SameLine(); HelpMarker("Coulomb's Law. Objects need 'charge' to interact.");
+
+                if (Config::useElectrostatics) {
+                    ImGui::DragFloat("Coulomb K", &Config::K, 100.0f, 0.0f, 100000.0f); 
+                }
+            }
+
+            if (ImGui::CollapsingHeader("World & View", ImGuiTreeNodeFlags_DefaultOpen)) {
+                ImGui::Text("Camera Zoom:");
+                ImGui::SliderFloat("##zoom", &Config::scale, 0.1f, 100.0f, "%.1f px/m", ImGuiSliderFlags_Logarithmic);
+                
+                ImGui::Text("Simulation Bounds (Meters):");
+                Vector2d bounds = engine.getSimBounds();
+                float size[2] = { bounds.x, bounds.y };
+                if (ImGui::DragFloat2("##bounds", size, 0.5f, 10.0f, 10000.0f)) {
+                    engine.setSimBounds(size[0], size[1]);
+                }
+
+                ImGui::Separator();
+                ImGui::Checkbox("Show Trails", &Config::renderTrails);
+                ImGui::Checkbox("Show Boundaries", &Config::renderWorldBounds);
+                ImGui::Checkbox("Show Velocity Vectors", &Config::renderVelocityVectors);
+            }
+
+            if(ImGui::CollapsingHeader("Storage / Saves")){
+                ImGui::Text("Save to file: ");
+                ImGui::InputText(".json", saveFileName, IM_ARRAYSIZE(saveFileName));
+
+                if(ImGui::Button("Save", ImVec2(-1, 0))){
+                    std::string path = "saves/" + std::string(saveFileName) + ".json";
+                    Serializer::saveToFile(path, engine);
+                }
+
+                ImGui::Separator();
+                ImGui::Text("Load from file: ");
+
+                static int selectedFileIndex = -1;
+                std::vector<std::string> files;
+
+                if(fs::exists("saves")){
+                    for(const auto& file: fs::directory_iterator("saves")){
+                        if(file.path().extension() == ".json"){
+                            files.push_back(file.path().filename().string());
+                        }
+                    }
+                }
+
+                if(ImGui::BeginListBox("##files", ImVec2(-1, 100))){
+                    for(int i = 0; i < files.size(); i++){
+                        const bool isSelected = (selectedFileIndex == i);
+                        if(ImGui::Selectable(files[i].c_str(), isSelected)){
+                            selectedFileIndex = i;
+                        }
+
+                        if(isSelected)
+                            ImGui::SetItemDefaultFocus();
+                    }
+                    ImGui::EndListBox();
+                }
+
+                if(ImGui::Button("Load", ImVec2(-1, 0))){
+                    if(selectedFileIndex >= 0 && selectedFileIndex < files.size()){
+                        std::string path = "saves/" + files[selectedFileIndex];
+                        Serializer::loadFromFile(path, engine);
+
+                        selectedBodies.clear();
+
+                        initialState = Serializer::serialize(engine);
+                        mode = AppMode::EDITOR;
+                    }
+                }
+            }
+
+            ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+            ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+            if (ImGui::BeginPopupModal("Create Object", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+                static int newItemType = 0; // 0 = Circle, 1 = Box
+                static float newItemMass = 10.0f;
+                static float newItemSize[2] = { 20.0f, 20.0f };
+                static float newItemPos[2] = { 0.0f, 0.0f };
+                static float newItemVel[2] = { 0.0f, 0.0f };
+                static float newItemCharge = 0.0f;
+                static float newItemRestitution = 0.8f;
+                static bool newItemStatic = false;
+
+                ImGui::Combo("Shape", &newItemType, "Circle\0Box\0");
+                
+                ImGui::Separator();
+
+                if (newItemType == 0) {
+                    ImGui::InputFloat("Radius", &newItemSize[0]);
+                } else {
+                    ImGui::InputFloat2("Width / Height", newItemSize);
+                }
+
+                ImGui::Checkbox("Is Static", &newItemStatic);
+
+                if (newItemStatic) ImGui::BeginDisabled();
+                ImGui::InputFloat("Mass", &newItemMass);
+                if (newItemStatic) ImGui::EndDisabled();
+
+                ImGui::InputFloat2("Position (m)", newItemPos);
+                ImGui::InputFloat2("Velocity (m/s)", newItemVel);
+                ImGui::SliderFloat("Bounciness", &newItemRestitution, 0.0f, 1.0f);
+                
+                if (Config::useElectrostatics) {
+                    ImGui::InputFloat("Charge", &newItemCharge);
+                }
+
+                ImGui::Spacing();
+                ImGui::Separator();
+                ImGui::Spacing();
+
+                if (ImGui::Button("Create", ImVec2(120, 0))) {
+                    Collider* col = nullptr;
+                    if (newItemType == 0) col = new CircleCollider(newItemSize[0]);
+                    else col = new BoxCollider(newItemSize[0], newItemSize[1]);
+
+                    Body* b = new Body(Vector2d(newItemPos[0], newItemPos[1]), 
+                                    Vector2d(newItemVel[0], newItemVel[1]), 
+                                    newItemMass, newItemRestitution, newItemCharge, col);
+
+                    if(newItemStatic) b->setStatic(true);
+                    
+                    engine.addBody(b);
+                    ImGui::CloseCurrentPopup();
+                }
+                
+                ImGui::SetItemDefaultFocus();
+                ImGui::SameLine();
+                
+                if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+                    ImGui::CloseCurrentPopup();
+                }
+
+                ImGui::EndPopup();
+            }
+
+            ImGui::End();
         }
-
-        ImGui::End();
-
 
         if (!selectedBodies.empty()) {
-            ImGui::Begin("Inspector");
+            ImVec2 inspectorPos;
+            inspectorPos.x = workPos.x + workSize.x - inspectorWidth;
+            inspectorPos.y = workPos.y + workSize.y - inspectorHeight;
+
+            ImGui::SetNextWindowPos(inspectorPos);
+            ImGui::SetNextWindowSize({inspectorWidth, inspectorHeight});
+            
+            ImGui::Begin("Inspector", NULL, staticWindowFlags);
 
             if(selectedBodies.size() == 1){
                 const std::vector<Body*>& bodies = engine.getBodies();
@@ -429,6 +480,7 @@ int main() {
                     if(ImGui::ArrowButton("##left", ImGuiDir_Left)){
                         currentIndex--;
                         if(currentIndex < 0) currentIndex = bodies.size() - 1;
+                        selectedBodies[0] = bodies[currentIndex];
                         selectedBody = bodies[currentIndex];
                     }
                     
@@ -439,6 +491,7 @@ int main() {
                     if(ImGui::ArrowButton("##right", ImGuiDir_Right)){
                         currentIndex++;
                         if(currentIndex >= bodies.size()) currentIndex = 0;
+                        selectedBodies[0] = bodies[currentIndex];
                         selectedBody = bodies[currentIndex];
                     }
                 }
@@ -467,9 +520,23 @@ int main() {
                     selectedBody->vel = Vector2d(vel[0], vel[1]);
                 }
 
+                bool isStatic = selectedBody->isStatic();
+                if (ImGui::Checkbox("Static Body", &isStatic)) {
+                    selectedBody->setStatic(isStatic);
+                }
+
+                if (isStatic) {
+                    ImGui::BeginDisabled();
+                }
+
                 float mass = selectedBody->getMass();
                 if (ImGui::DragFloat("Mass", &mass, 1.0f, 0.1f, 10000.0f)) {
                     selectedBody->setMass(mass);
+                }
+
+                if (isStatic) {
+                    ImGui::EndDisabled();
+                    ImGui::SameLine(); HelpMarker("Uncheck 'Static' to edit mass.");
                 }
 
                 float charge = selectedBody->charge;
@@ -511,10 +578,21 @@ int main() {
 
                 ImGui::Separator();
 
-                float commonMass = selectedBodies[0]->getMass();
-                if (ImGui::DragFloat("Mass (All)", &commonMass, 1.0f, 0.1f, 10000.0f)){
-                    for(Body* b: selectedBodies) b->setMass(commonMass);
+                bool allStatic = true;
+                for(auto* b : selectedBodies) if(!b->isStatic()) allStatic = false;
+
+                if (ImGui::Checkbox("Static (All)", &allStatic)) {
+                    for(auto* b : selectedBodies) b->setStatic(allStatic);
                 }
+
+                if (allStatic) ImGui::BeginDisabled();
+                
+                float commonMass = selectedBodies[0]->getMass(); 
+                if (ImGui::DragFloat("Mass (All)", &commonMass, 1.0f, 0.1f, 10000.0f)) {
+                    for (auto* b : selectedBodies) b->setMass(commonMass);
+                }
+
+                if (allStatic) ImGui::EndDisabled();
                 
                 float commonRestitution = selectedBodies[0]->restitution;
                 if (ImGui::SliderFloat("Bounciness (All)", &commonRestitution, 0.0f, 1.0f)){
@@ -563,11 +641,46 @@ int main() {
             ImGui::End();
         }
 
+
         float dt = clock.restart().asSeconds();
+
+        if(dt > 0.1f) {
+            dt = 0.1f;
+        }
+
+        ImVec2 windowPos({workPos.x + workSize.x - padding, workPos.y + padding});
+        ImVec2 windowPosPivot({1.0f, 0.0f});
+
+        ImGui::SetNextWindowPos(windowPos, ImGuiCond_Always, windowPosPivot);
+        ImGui::SetNextWindowBgAlpha(0.35f);
+        ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
         
+        if (ImGui::Begin("Performance Overlay", NULL, windowFlags)) {
+            float fps = 1.0f / dt;
+            float ms = dt * 1000.0f;
+
+            ImGui::Text("FPS: %.1f", fps);
+            ImGui::Text("Frame Time: %.2f ms", ms);
+            ImGui::Separator();
+            ImGui::Text("Bodies: %d", (int)engine.getBodies().size());
+            
+            static float values[90] = {};
+            static int values_offset = 0;
+            static float refresh_time = 0.0f;
+            
+            if (refresh_time == 0.0f) refresh_time = ImGui::GetTime();
+            while (refresh_time < ImGui::GetTime()) {
+                values[values_offset] = fps;
+                values_offset = (values_offset + 1) % IM_ARRAYSIZE(values);
+                refresh_time += 1.0f / 60.0f;
+            }
+            
+            ImGui::PlotLines("##fps", values, IM_ARRAYSIZE(values), values_offset, NULL, 0.0f, 100.0f, ImVec2(0, 40.0f));
+        }
+        ImGui::End();
+
         if(mode == AppMode::SIMULATION){
             engine.update(dt);
-            profiler.update(dt);
         }
 
         sf::Vector2i mouse = sf::Mouse::getPosition(window);
@@ -589,8 +702,8 @@ int main() {
         
         if(isPanning){
             sf::Vector2i mousePosDiff = lastMousePos - mouse;
-            float moveX = mousePosDiff.x / Config::SCALE;
-            float moveY = -mousePosDiff.y / Config::SCALE;
+            float moveX = mousePosDiff.x / Config::scale;
+            float moveY = -mousePosDiff.y / Config::scale;
 
             renderer.moveCamera({moveX, moveY});
 
@@ -604,7 +717,7 @@ int main() {
         lastMousePos = mouse;
 
         window.clear(Config::COLOR_BACKGROUND);
-        renderer.render(engine, profiler.getDebugInfo(engine));
+        renderer.render(engine);
 
         if(isSelectingBox) {
             renderer.drawSelectionBox(boxStartPos, mousePos);

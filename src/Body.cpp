@@ -1,16 +1,25 @@
 #include "Body.h"
 
 void Body::setMass(float m){
+    if(mass <= 0.0f) return;
+   
     mass = m;
-    if (mass <= 0) {
-        invMass = 0;
-    } else {
+    if(invMass != 0.0f){
         invMass = 1.0f / mass;
     }
 }
 
+void Body::setStatic(bool isStatic){
+    if(isStatic){
+        invMass = 0;
+        vel = {0.0f, 0.0f};
+    }else{
+        invMass = 1.0f/mass;
+    }
+}
+
 void Body::update(float dt){
-    if(invMass == 0) return;
+    if(invMass == 0.0f) return;
 
     Vector2d a = force*invMass;
     vel += a*dt;
