@@ -6,18 +6,24 @@
 json Serializer::serialize(const PhysicsEngine& engine){
     json j;
 
+    // Save global simulation settings
     j["settings"] = {
         {"G", Config::G},
+        {"K", Config::K},
         {"scale", Config::scale},
+        {"simWidth", engine.getSimBounds().x},
+        {"simHeight", engine.getSimBounds().y},
         {"useGravity", Config::useGravity},
         {"useNBodyGravity", Config::useNBodyGravity},
         {"useElectrostatics", Config::useElectrostatics},
         {"checkBodyCollisions", Config::useBodiesCollision},
         {"checkWindowCollisions", Config::useWindowCollision},
-        {"simWidth", engine.getSimBounds().x},
-        {"simHeight", engine.getSimBounds().y}
+        {"renderTrails", Config::renderTrails},
+        {"renderVelocityVectors", Config::renderVelocityVectors},
+        {"renderWorldBounds", Config::renderWorldBounds}
     };
 
+    // Save all bodies
     j["bodies"] = json::array();
     for(const Body* body: engine.getBodies()){
         json b;
@@ -45,23 +51,29 @@ json Serializer::serialize(const PhysicsEngine& engine){
 }
 
 void Serializer::deserialize(PhysicsEngine& engine, const json& j){
+    // Load global simulation settings
     if(j.contains("settings")){
         json s = j["settings"];
         Config::G = s.value("G", 1000.0f);
-        Config::scale = s.value("scale", 50.0f);
+        Config::K = s.value("K", 10000.0f);
+        Config::scale = s.value("scale", 1.0f);
         Config::useGravity = s.value("useGravity", true);
         Config::useNBodyGravity = s.value("useNBodyGravity", false);
         Config::useElectrostatics = s.value("useElectrostatics", false);
         Config::useBodiesCollision = s.value("checkBodyCollisions", true);
         Config::useWindowCollision = s.value("checkWindowCollisions", true);
+        Config::renderTrails = s.value("renderTrails", true);
+        Config::renderVelocityVectors = s.value("renderVelocityVectors", true);
+        Config::renderWorldBounds = s.value("renderWorldBounds", true);
         
-        float sw = s.value("simWidth", 20.0f);
-        float sh = s.value("simHeight", 15.0f);
+        float sw = s.value("simWidth", 800.0f);
+        float sh = s.value("simHeight", 600.0f);
         engine.setSimBounds(sw, sh);
     }
 
     engine.clearBodies();
 
+    // Load all bodies
     if (j.contains("bodies")) {
         for(const auto& b : j["bodies"]){
             Vector2d pos(b["pos"][0], b["pos"][1]);

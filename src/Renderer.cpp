@@ -3,6 +3,7 @@
 void Renderer::render(const PhysicsEngine& engine){
     const std::vector<Body*> bodies = engine.getBodies();
 
+    // Render world bounds
     if(Config::renderWorldBounds){
         Vector2d simBounds = engine.getSimBounds();
         sf::RectangleShape boundsRect(sf::Vector2f(simBounds.x * Config::scale, simBounds.y * Config::scale));
@@ -17,12 +18,14 @@ void Renderer::render(const PhysicsEngine& engine){
         window.draw(boundsRect);
     }
 
+    // Render trails
     if(Config::renderTrails){
         for(const Body* body: bodies){
             drawTrail(*body);
         }
     }
 
+    // Render velocity vectors
     if(Config::renderVelocityVectors){
         for(const Body* body: bodies){
             float r = 0.0f;
@@ -36,7 +39,7 @@ void Renderer::render(const PhysicsEngine& engine){
         }
     }
 
-
+    // Render bodies
     for(const Body* body: bodies){
         switch (body->collider->shapeType)
         {
@@ -121,7 +124,6 @@ void Renderer::drawTrail(const Body& body){
 
 void Renderer::drawSelection(const Body& body){
     float padding = 5.0f;
-    sf::Shape* shape = nullptr;
     Collider* col = body.collider;
     if(col->shapeType == CIRCLE){
         CircleCollider* circle = static_cast<CircleCollider*>(col);
@@ -133,7 +135,8 @@ void Renderer::drawSelection(const Body& body){
         circleShape.setFillColor(sf::Color::Transparent);
         circleShape.setOutlineColor(Config::COLOR_SELECTION);
         circleShape.setOutlineThickness(2.0f);
-        shape = new sf::CircleShape(circleShape);
+        window.draw(circleShape);
+        
     }else if(col->shapeType == BOX){
         BoxCollider* box = static_cast<BoxCollider*>(col);
         sf::RectangleShape rectShape(sf::Vector2f((box->width + 2*padding) * Config::scale, (box->height + 2*padding) * Config::scale));
@@ -143,10 +146,8 @@ void Renderer::drawSelection(const Body& body){
         rectShape.setFillColor(sf::Color::Transparent);
         rectShape.setOutlineColor(Config::COLOR_SELECTION);
         rectShape.setOutlineThickness(2.0f);
-        shape = new sf::RectangleShape(rectShape);
+        window.draw(rectShape);
     }
-
-    window.draw(*shape);
 }
 
 void Renderer::drawSelectionBox(const Vector2d& start, const Vector2d& current){

@@ -1,7 +1,7 @@
 #include "Body.h"
 
 void Body::setMass(float m){
-    if(mass <= 0.0f) return;
+    if(m <= 0.0f) return;
    
     mass = m;
     if(invMass != 0.0f){

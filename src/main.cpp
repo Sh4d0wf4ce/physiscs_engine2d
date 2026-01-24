@@ -9,8 +9,10 @@
 
 namespace fs = std::filesystem;
 
+// Appplication state: Editor (paused time, body manipulation) or Simulation (running time)
 enum AppMode {EDITOR, SIMULATION};
 
+// Helper function to display tooltips in ImGui
 static void HelpMarker(const char* desc){
     ImGui::TextDisabled("(?)");
     if(ImGui::IsItemHovered() && ImGui::BeginTooltip()){
@@ -21,6 +23,7 @@ static void HelpMarker(const char* desc){
     }
 }
 
+// Helper function to check if a body is in the selected bodies list
 bool isBodySelected(const std::vector<Body*>& bodies, Body* b){
     for(Body* body: bodies){
         if(body == b) return true;
@@ -29,26 +32,33 @@ bool isBodySelected(const std::vector<Body*>& bodies, Body* b){
 }
 
 int main() {
+    // --- Window Setup ---
     sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
-    
+
+    // Create a window that is 80% of the screen
     unsigned int w = static_cast<unsigned int>(desktop.size.x * 0.8f);
     unsigned int h = static_cast<unsigned int>(desktop.size.y * 0.8f);
 
     sf::RenderWindow window(sf::VideoMode({w, h}), "Physics Engine 2D", sf::Style::Default);
 
     window.setPosition({(desktop.size.x - w)/2, (desktop.size.y - h)/2});
-
     window.setFramerateLimit(60);
 
+    // Initialize ImGui-SFML
     if(!ImGui::SFML::Init(window)) return -1;
 
+
+    // --- Simulation Setup ---
     PhysicsEngine engine;
     AppMode mode = AppMode::EDITOR;
+
+    // Selection and clipboard buffers
     std::vector<Body*> selectedBodies;
     std::vector<Body*> clipboard;
 
     Renderer renderer(window);
 
+    // Ensure saves directory exists
     if(!fs::exists("saves")){
         fs::create_directory("saves");
     }
@@ -56,7 +66,8 @@ int main() {
     char saveFileName[64] = "save1";
     
 
-
+    // --- Default Scene Setup (Solar System Demo) ---
+    // Creating initial objects programmatically for demonstration
     Body* sun = new Body({0, 0}, {0, 0}, 10000, 0.0f, 0, new CircleCollider(30));
     Body* planet1 = new Body({200, 0}, {0, 223.61f}, 1, 0.0f, 0, new CircleCollider(10));
     Body* planet2 = new Body({-100, 0}, {0, -316.23f}, 1, 0.0f, 0, new CircleCollider(10));
@@ -66,65 +77,67 @@ int main() {
     engine.addBody(planet2);
     engine.addBody(planet3);
     
-
-    float simWidth = Config::WINDOW_WIDTH / Config::scale;
-    float simHeight = Config::WINDOW_HEIGHT / Config::scale;
-    engine.setSimBounds(simWidth, simHeight);
-    
+    // Serialize the initial state to allow "Reset" functionality
     nlohmann::json initialState = Serializer::serialize(engine);
     sf::Clock clock;
-    sf::Clock deltaClock;
+    sf::Clock deltaClock; // For ImGui-SFML
 
-    bool isCameraFollowing = false;
-    bool isDragging = false;
-    bool isVelocityDragging = false;
-    bool isPanning = false;
-    bool isSelectingBox = false;
-    bool showPanel = true;
+
+    // --- Interaction Flags ---
+    bool isCameraFollowing = false; // Camera follows selected body
+    bool isDragging = false; // Body dragging with mouse
+    bool isVelocityDragging = false; // Velocity vector dragging with mouse
+    bool isPanning = false; // Moving the camera
+    bool isSelectingBox = false; // Dragging selection box
+    bool showPanel = true; // Show/hide control panel
 
     Vector2d boxStartPos = {0, 0};
     sf::Vector2i lastMousePos;
 
+    // --- Main loop ---
     while(window.isOpen()){
+        // 1. Event Handling
         while (const std::optional event = window.pollEvent()){
             ImGui::SFML::ProcessEvent(window, *event);
 
             if(event->is<sf::Event::Closed>()) window.close();
 
+            // Handle window resizing
             if(const auto* resized = event->getIf<sf::Event::Resized>()){
                 sf::FloatRect visibleArea({0, 0}, {resized->size.x, resized->size.y});
                 window.setView(sf::View(visibleArea));
             }
 
+            // Check if mouse/keyboard is captured by ImGui
             bool mouseOnUI = ImGui::GetIO().WantCaptureMouse;
             bool keyboardOnUI = ImGui::GetIO().WantCaptureKeyboard;
 
+
             if(!keyboardOnUI && !mouseOnUI){
+                // --- Keyboard handling ---
                 if(const auto& keyEvent = event->getIf<sf::Event::KeyPressed>()){
                     if(keyEvent->code == sf::Keyboard::Key::Space){
-                        if(mode ==  AppMode::EDITOR){
-                            mode = AppMode::SIMULATION;
-                        }else{
-                            mode = AppMode::EDITOR;
-                        }
+                        // Toggle between Editor and Simulation modes (Space key)
+                        if(mode ==  AppMode::EDITOR) mode = AppMode::SIMULATION;
+                        else mode = AppMode::EDITOR;
                     }else if(keyEvent->code == sf::Keyboard::Key::R){
+                        // Reset simulation state to the one saved in initialState buffer (R key)
                         selectedBodies.clear();
                         renderer.setCameraPos({0,0});
                         Serializer::deserialize(engine, initialState);
                     }else if(keyEvent->code == sf::Keyboard::Key::F){
-                        if(selectedBodies.size() == 1)
-                            isCameraFollowing = !isCameraFollowing;
-                        else
-                            isCameraFollowing = false;
+                        // Toggle camera follow on selected body (F key)
+                        if(selectedBodies.size() == 1) isCameraFollowing = !isCameraFollowing;
+                        else isCameraFollowing = false;
                     }else if(keyEvent->code == sf::Keyboard::Key::C && keyEvent->control){
+                        // Copy selected bodies to clipboard (Ctrl + C)
                         if(!selectedBodies.empty()){
                             for(Body* b: clipboard) delete b;
                             clipboard.clear();
-
                             for(Body* b: selectedBodies) clipboard.push_back(b->clone());
-                            
                         }
                     }else if(keyEvent->code == sf::Keyboard::Key::V && keyEvent->control){
+                        // Paste bodies from clipboard into the scene (Ctrl + V)
                         if(!clipboard.empty()){
                             Vector2d groupCenter = {0, 0};
                             for(Body* b: clipboard) groupCenter = groupCenter + b->pos;
@@ -144,18 +157,21 @@ int main() {
                             }
                         }
                     }else if(keyEvent->code == sf::Keyboard::Key::Tab){
+                        // Toggle control panel visibility (Tab key)
                         showPanel = !showPanel;
                     }
                 }
-
+                // --- Mouse handling ---
                 if(const auto& mouseEvent = event->getIf<sf::Event::MouseButtonPressed>()){
                     Vector2d mousePos = renderer.screenToReal({mouseEvent->position.x, mouseEvent->position.y});
                     Body* clickedBody = engine.findBodyAt(mousePos);
                     lastMousePos = mouseEvent->position;
-
+                    
                     if(mouseEvent->button == sf::Mouse::Button::Left){
                         if(clickedBody){
+                            // Clicked on a body
                             if(mode == AppMode::EDITOR){
+                                // Multi-selection logic (Ctrl + Click)
                                 bool ctrlPressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl);
     
                                 if(ctrlPressed){
@@ -173,6 +189,7 @@ int main() {
     
                                 isDragging = true;
                             }else{
+                                // In Simulation mode: single selection only
                                 selectedBodies.clear();
                                 selectedBodies.push_back(clickedBody);
                                 isDragging = false;
@@ -181,6 +198,7 @@ int main() {
                             isCameraFollowing = false;
                             isSelectingBox = false;
                         }else{
+                            // Clicked on empty space
                             if(mode == AppMode::EDITOR){
                                 if(!sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl)){
                                     selectedBodies.clear();
@@ -196,6 +214,7 @@ int main() {
                             isDragging = false;
                         }
                     }else if(mouseEvent->button == sf::Mouse::Button::Right){
+                        // Right mouse button: initiate velocity vector drag or camera panning
                         if (clickedBody && mode == AppMode::EDITOR) {
                             selectedBodies.clear();
                             selectedBodies.push_back(clickedBody);
@@ -206,10 +225,12 @@ int main() {
                     }
                 }
 
+                // Mouse release logic
                 if(const auto& mouseEvent = event->getIf<sf::Event::MouseButtonReleased>()){
                     Vector2d mousePos = renderer.screenToReal({mouseEvent->position.x, mouseEvent->position.y});
                     if(mouseEvent->button == sf::Mouse::Button::Left){
                         if(isSelectingBox){
+                            // Select all bodies within the selection box
                             float minX = std::min(boxStartPos.x, mousePos.x);
                             float maxX = std::max(boxStartPos.x, mousePos.x);
                             float minY = std::min(boxStartPos.y, mousePos.y);
@@ -233,6 +254,7 @@ int main() {
                     }
                 }
 
+                // Mouse wheel - Zooming in/out
                 if(const auto& mouseEvent = event->getIf<sf::Event::MouseWheelScrolled>()){
                     float zoomFactor = 1.1f;
                     float multiplier = mouseEvent->delta > 0 ? zoomFactor : (1.0f / zoomFactor);
@@ -241,6 +263,7 @@ int main() {
             }
         }
 
+        // 2. ImGui UI
         const ImGuiViewport* viewport = ImGui::GetMainViewport();
         ImVec2 workPos = viewport->WorkPos;
         ImVec2 workSize = viewport->WorkSize;
@@ -254,6 +277,8 @@ int main() {
 
         ImGui::SFML::Update(window, deltaClock.restart());
 
+
+        // --- Control Panel ---
         if(showPanel){
             ImGui::SetNextWindowPos(workPos);
             ImGui::SetNextWindowSize({controlPanelWidth, workSize.y});
@@ -262,20 +287,18 @@ int main() {
 
             float width = ImGui::GetContentRegionAvail().x;
 
+            // Play, Pause, Reset, Save State, Add new object buttons
             if (mode == AppMode::EDITOR) {
-                if (ImGui::Button("PLAY", ImVec2(width * 0.3f, 30))) {
-                    mode = AppMode::SIMULATION;
-                }
+                if (ImGui::Button("PLAY", ImVec2(width * 0.3f, 30))) mode = AppMode::SIMULATION;
             } else {
-                if (ImGui::Button("PAUSE", ImVec2(width * 0.3f, 30))) {
-                    mode = AppMode::EDITOR;
-                }
+                if (ImGui::Button("PAUSE", ImVec2(width * 0.3f, 30))) mode = AppMode::EDITOR;
             }
 
             ImGui::SameLine();
             if (ImGui::Button("RESET", ImVec2(width * 0.3f, 30))) {
                 selectedBodies.clear();
                 Serializer::deserialize(engine, initialState);
+                renderer.setCameraPos({0,0});
             }
 
             ImGui::SameLine();
@@ -291,7 +314,7 @@ int main() {
                 ImGui::OpenPopup("Create Object");
             }
 
-
+            // Physics settings
             if (ImGui::CollapsingHeader("Physics Rules", ImGuiTreeNodeFlags_DefaultOpen)) {
                 ImGui::Checkbox("Check Body Collisions", &Config::useBodiesCollision);
                 ImGui::Checkbox("Check Wall Collisions", &Config::useWindowCollision);
@@ -320,6 +343,7 @@ int main() {
                 }
             }
 
+            // World and view settings
             if (ImGui::CollapsingHeader("World & View", ImGuiTreeNodeFlags_DefaultOpen)) {
                 ImGui::Text("Camera Zoom:");
                 ImGui::SliderFloat("##zoom", &Config::scale, 0.1f, 100.0f, "%.1f px/m", ImGuiSliderFlags_Logarithmic);
@@ -337,6 +361,7 @@ int main() {
                 ImGui::Checkbox("Show Velocity Vectors", &Config::renderVelocityVectors);
             }
 
+            // Save/Load System
             if(ImGui::CollapsingHeader("Storage / Saves")){
                 ImGui::Text("Save to file: ");
                 ImGui::InputText(".json", saveFileName, IM_ARRAYSIZE(saveFileName));
@@ -377,7 +402,7 @@ int main() {
                     if(selectedFileIndex >= 0 && selectedFileIndex < files.size()){
                         std::string path = "saves/" + files[selectedFileIndex];
                         Serializer::loadFromFile(path, engine);
-
+                        renderer.setCameraPos({0,0});
                         selectedBodies.clear();
 
                         initialState = Serializer::serialize(engine);
@@ -386,6 +411,7 @@ int main() {
                 }
             }
 
+            // Modal popup for Object Creation
             ImVec2 center = ImGui::GetMainViewport()->GetCenter();
             ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 
@@ -403,11 +429,8 @@ int main() {
                 
                 ImGui::Separator();
 
-                if (newItemType == 0) {
-                    ImGui::InputFloat("Radius", &newItemSize[0]);
-                } else {
-                    ImGui::InputFloat2("Width / Height", newItemSize);
-                }
+                ImGui::InputFloat2("Position (m)", newItemPos);
+                ImGui::InputFloat2("Velocity (m/s)", newItemVel);
 
                 ImGui::Checkbox("Is Static", &newItemStatic);
 
@@ -415,12 +438,13 @@ int main() {
                 ImGui::InputFloat("Mass", &newItemMass);
                 if (newItemStatic) ImGui::EndDisabled();
 
-                ImGui::InputFloat2("Position (m)", newItemPos);
-                ImGui::InputFloat2("Velocity (m/s)", newItemVel);
                 ImGui::SliderFloat("Bounciness", &newItemRestitution, 0.0f, 1.0f);
-                
-                if (Config::useElectrostatics) {
-                    ImGui::InputFloat("Charge", &newItemCharge);
+                ImGui::InputFloat("Charge", &newItemCharge);
+
+                if (newItemType == 0) {
+                    ImGui::InputFloat("Radius", &newItemSize[0]);
+                } else {
+                    ImGui::InputFloat2("Width / Height", newItemSize);
                 }
 
                 ImGui::Spacing();
@@ -455,6 +479,8 @@ int main() {
             ImGui::End();
         }
 
+
+        // --- Inspector Panel ---
         if (!selectedBodies.empty()) {
             ImVec2 inspectorPos;
             inspectorPos.x = workPos.x + workSize.x - inspectorWidth;
@@ -465,6 +491,7 @@ int main() {
             
             ImGui::Begin("Inspector", NULL, staticWindowFlags);
 
+            // Single object inspector
             if(selectedBodies.size() == 1){
                 const std::vector<Body*>& bodies = engine.getBodies();
                 Body* selectedBody = selectedBodies[0];
@@ -476,6 +503,7 @@ int main() {
                     }
                 }
 
+                // Navigation arrows to cycle through bodies
                 if(currentIndex != -1){
                     if(ImGui::ArrowButton("##left", ImGuiDir_Left)){
                         currentIndex--;
@@ -507,9 +535,8 @@ int main() {
                 }
 
                 ImGui::Separator();
-                    
-                ImGui::Separator();
 
+                // Property editors
                 float pos[2] = { selectedBody->pos.x, selectedBody->pos.y };
                 float vel[2] = { selectedBody->vel.x, selectedBody->vel.y };
 
@@ -550,6 +577,8 @@ int main() {
                 }
                 
                 ImGui::Separator();
+
+                // Shape-specific properties
                 if (selectedBody->collider->shapeType == CIRCLE){
                     CircleCollider* c = static_cast<CircleCollider*>(selectedBody->collider);
                     ImGui::DragFloat("Radius", &c->r, 0.5f, 1.0f, 500.0f);
@@ -569,6 +598,7 @@ int main() {
                     selectedBodies.clear();
                 }
             }else{
+                // Multiple objects inspector
                 ImGui::Text("%d objects selected", (int)selectedBodies.size());
 
                 bool allCircles = true;
@@ -581,6 +611,7 @@ int main() {
 
                 ImGui::Separator();
 
+                // Batch property editors
                 bool allStatic = true;
                 for(auto* b : selectedBodies) if(!b->isStatic()) allStatic = false;
 
@@ -609,6 +640,7 @@ int main() {
 
                 ImGui::Separator();
 
+                // Batch resize
                 if (allCircles) {
                     float r = static_cast<CircleCollider*>(selectedBodies[0]->collider)->r;
                     if (ImGui::DragFloat("Radius (All)", &r, 0.5f, 1.0f, 500.0f)) {
@@ -645,11 +677,9 @@ int main() {
         }
 
 
+        // 3. Performance Overlay
         float dt = clock.restart().asSeconds();
-
-        if(dt > 0.1f) {
-            dt = 0.1f;
-        }
+        if(dt > 0.1f) dt = 0.1f; // Cap dt to prevent explosion on frame drops
 
         ImVec2 windowPos({workPos.x + workSize.x - padding, workPos.y + padding});
         ImVec2 windowPosPivot({1.0f, 0.0f});
@@ -682,6 +712,7 @@ int main() {
         }
         ImGui::End();
 
+        // 4. Simulation Update & Rendering
         if(mode == AppMode::SIMULATION){
             engine.update(dt);
         }
@@ -689,6 +720,7 @@ int main() {
         sf::Vector2i mouse = sf::Mouse::getPosition(window);
         Vector2d mousePos = renderer.screenToReal({mouse.x, mouse.y});
 
+        // Mouse dragging logic
         if(mode == AppMode::EDITOR) {
             if(isDragging && !selectedBodies.empty()){
                 Vector2d prevMouseWorld = renderer.screenToReal({lastMousePos.x, lastMousePos.y});
@@ -703,6 +735,7 @@ int main() {
             }
         }
         
+        // Camera panning logic
         if(isPanning){
             sf::Vector2i mousePosDiff = lastMousePos - mouse;
             float moveX = mousePosDiff.x / Config::scale;
@@ -719,6 +752,7 @@ int main() {
 
         lastMousePos = mouse;
 
+        // Rendering
         window.clear(Config::COLOR_BACKGROUND);
         renderer.render(engine);
 

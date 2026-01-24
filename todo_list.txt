@@ -6,7 +6,6 @@
 - naprawić gitignore
 - dokumentacja
 
-- boxy (nakladaja sile tylko od swojego srodka, nie da się np. zrobić plytki naladowanej dodatnio)
 
 - co powinno się zapisywać a co nie (zarówno pliki jak i save state)
 - zapis scen w assetach a nie w glownym folderze
