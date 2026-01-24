@@ -7,7 +7,7 @@
 
 using json = nlohmann::json;
 
-/// @brief Static class responsible for saving and loading simulation stats.
+/// @brief Static class responsible for saving and loading simulation states.
 /// Uses the nlohmannn/json library to serialize the PhysicsEngine state
 /// (bodies, parameters, global settings) into human-readable JSON format.
 class Serializer {
@@ -27,7 +27,7 @@ public:
 
     /// @brief Saves the current simulation state to a file in JSON format.
     /// @param filename The path/name of the file to save to
-    /// @param engine The physcis engine instance to serialize and save.
+    /// @param engine The physics engine instance to serialize and save.
     static void saveToFile(const std::string& filename, const PhysicsEngine& engine);
 
     /// @brief Loads a simulation state from a JSON file.
