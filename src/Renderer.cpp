@@ -189,7 +189,7 @@ void Renderer::drawVector(const Vector2d& start, const Vector2d& vector){
     float x2 = endScreen.x - arrowLen * std::cos(angle + arrowAngle);
     float y2 = endScreen.y - arrowLen * std::sin(angle + arrowAngle);
 
-    std::array arrow = {
+    std::array<sf::Vertex, 3> arrow = {
         sf::Vertex{{endScreen.x, endScreen.y}, Config::COLOR_VECTOR},
         sf::Vertex{{x1, y1}, Config::COLOR_VECTOR},
         sf::Vertex{{x2, y2}, Config::COLOR_VECTOR},
