@@ -1,7 +1,6 @@
 - .vscode sprawdzić co tam jest i po co
-- makefile zrobić, żeby to sensownie dzialalo i dla windowsa i dla linuxa
 - naprawić gitignore
-
+- makefile usunąć komentarze
 - warningi przy kompilacji naprawic
 - poprawić wszędzie na 0.0f
 - dodanie przykładowych scen
