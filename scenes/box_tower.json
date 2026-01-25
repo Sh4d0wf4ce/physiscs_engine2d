@@ -1,0 +1,577 @@
+{
+    "bodies": [
+        {
+            "charge": 0.0,
+            "isStatic": false,
+            "mass": 100.0,
+            "pos": [
+                195.5521240234375,
+                -194.0
+            ],
+            "radius": 20.0,
+            "restitution": 0.800000011920929,
+            "type": "CIRCLE",
+            "vel": [
+                -754.4478759765625,
+                -47.0
+            ]
+        },
+        {
+            "charge": 0.0,
+            "height": 40.0,
+            "isStatic": false,
+            "mass": 10.0,
+            "pos": [
+                -319.0,
+                -273.5442810058594
+            ],
+            "restitution": 0.30000001192092896,
+            "type": "BOX",
+            "vel": [
+                0.0,
+                -4.488156795501709
+            ],
+            "width": 40.0
+        },
+        {
+            "charge": 0.0,
+            "height": 40.0,
+            "isStatic": false,
+            "mass": 10.0,
+            "pos": [
+                -372.0,
+                -273.27215576171875
+            ],
+            "restitution": 0.30000001192092896,
+            "type": "BOX",
+            "vel": [
+                0.0,
+                -2.018125057220459
+            ],
+            "width": 40.0
+        },
+        {
+            "charge": 0.0,
+            "height": 40.0,
+            "isStatic": false,
+            "mass": 10.0,
+            "pos": [
+                -372.0,
+                -223.0
+            ],
+            "restitution": 0.30000001192092896,
+            "type": "BOX",
+            "vel": [
+                0.0,
+                -4.488156795501709
+            ],
+            "width": 40.0
+        },
+        {
+            "charge": 0.0,
+            "height": 40.0,
+            "isStatic": false,
+            "mass": 10.0,
+            "pos": [
+                -321.0,
+                -222.0
+            ],
+            "restitution": 0.30000001192092896,
+            "type": "BOX",
+            "vel": [
+                0.0,
+                -4.488156795501709
+            ],
+            "width": 40.0
+        },
+        {
+            "charge": 0.0,
+            "height": 40.0,
+            "isStatic": false,
+            "mass": 10.0,
+            "pos": [
+                -370.0,
+                -170.0
+            ],
+            "restitution": 0.30000001192092896,
+            "type": "BOX",
+            "vel": [
+                0.0,
+                -4.488156795501709
+            ],
+            "width": 40.0
+        },
+        {
+            "charge": 0.0,
+            "height": 40.0,
+            "isStatic": false,
+            "mass": 10.0,
+            "pos": [
+                -318.0,
+                -169.0
+            ],
+            "restitution": 0.30000001192092896,
+            "type": "BOX",
+            "vel": [
+                0.0,
+                -4.488156795501709
+            ],
+            "width": 40.0
+        },
+        {
+            "charge": 0.0,
+            "height": 40.0,
+            "isStatic": false,
+            "mass": 10.0,
+            "pos": [
+                -176.0,
+                -274.0
+            ],
+            "restitution": 0.30000001192092896,
+            "type": "BOX",
+            "vel": [
+                0.0,
+                -4.488156795501709
+            ],
+            "width": 40.0
+        },
+        {
+            "charge": 0.0,
+            "height": 40.0,
+            "isStatic": false,
+            "mass": 10.0,
+            "pos": [
+                -126.0,
+                -274.0
+            ],
+            "restitution": 0.30000001192092896,
+            "type": "BOX",
+            "vel": [
+                0.0,
+                -4.488156795501709
+            ],
+            "width": 40.0
+        },
+        {
+            "charge": 0.0,
+            "height": 40.0,
+            "isStatic": false,
+            "mass": 10.0,
+            "pos": [
+                -126.0,
+                -225.0
+            ],
+            "restitution": 0.30000001192092896,
+            "type": "BOX",
+            "vel": [
+                0.0,
+                -4.488156795501709
+            ],
+            "width": 40.0
+        },
+        {
+            "charge": 0.0,
+            "height": 40.0,
+            "isStatic": false,
+            "mass": 10.0,
+            "pos": [
+                -174.0,
+                -224.0
+            ],
+            "restitution": 0.30000001192092896,
+            "type": "BOX",
+            "vel": [
+                0.0,
+                -4.488156795501709
+            ],
+            "width": 40.0
+        },
+        {
+            "charge": 0.0,
+            "height": 40.0,
+            "isStatic": false,
+            "mass": 10.0,
+            "pos": [
+                -124.0,
+                -173.0
+            ],
+            "restitution": 0.30000001192092896,
+            "type": "BOX",
+            "vel": [
+                0.0,
+                -4.488156795501709
+            ],
+            "width": 40.0
+        },
+        {
+            "charge": 0.0,
+            "height": 40.0,
+            "isStatic": false,
+            "mass": 10.0,
+            "pos": [
+                -176.0,
+                -173.0
+            ],
+            "restitution": 0.30000001192092896,
+            "type": "BOX",
+            "vel": [
+                0.0,
+                -4.488156795501709
+            ],
+            "width": 40.0
+        },
+        {
+            "charge": 0.0,
+            "height": 40.0,
+            "isStatic": false,
+            "mass": 10.0,
+            "pos": [
+                -176.0,
+                -114.0
+            ],
+            "restitution": 0.30000001192092896,
+            "type": "BOX",
+            "vel": [
+                0.0,
+                -4.488156795501709
+            ],
+            "width": 40.0
+        },
+        {
+            "charge": 0.0,
+            "height": 40.0,
+            "isStatic": false,
+            "mass": 10.0,
+            "pos": [
+                -124.0,
+                -115.0
+            ],
+            "restitution": 0.30000001192092896,
+            "type": "BOX",
+            "vel": [
+                0.0,
+                -4.488156795501709
+            ],
+            "width": 40.0
+        },
+        {
+            "charge": 0.0,
+            "height": 40.0,
+            "isStatic": false,
+            "mass": 10.0,
+            "pos": [
+                -315.0,
+                -113.0
+            ],
+            "restitution": 0.30000001192092896,
+            "type": "BOX",
+            "vel": [
+                0.0,
+                -4.488156795501709
+            ],
+            "width": 40.0
+        },
+        {
+            "charge": 0.0,
+            "height": 40.0,
+            "isStatic": false,
+            "mass": 10.0,
+            "pos": [
+                -367.0,
+                -112.0
+            ],
+            "restitution": 0.30000001192092896,
+            "type": "BOX",
+            "vel": [
+                0.0,
+                -4.488156795501709
+            ],
+            "width": 40.0
+        },
+        {
+            "charge": 0.0,
+            "height": 40.0,
+            "isStatic": false,
+            "mass": 10.0,
+            "pos": [
+                -346.0,
+                -58.0
+            ],
+            "restitution": 0.30000001192092896,
+            "type": "BOX",
+            "vel": [
+                0.0,
+                -4.488156795501709
+            ],
+            "width": 40.0
+        },
+        {
+            "charge": 0.0,
+            "height": 40.0,
+            "isStatic": false,
+            "mass": 10.0,
+            "pos": [
+                -293.0,
+                -58.0
+            ],
+            "restitution": 0.30000001192092896,
+            "type": "BOX",
+            "vel": [
+                0.0,
+                -4.488156795501709
+            ],
+            "width": 40.0
+        },
+        {
+            "charge": 0.0,
+            "height": 40.0,
+            "isStatic": false,
+            "mass": 10.0,
+            "pos": [
+                -144.0,
+                -64.0
+            ],
+            "restitution": 0.30000001192092896,
+            "type": "BOX",
+            "vel": [
+                0.0,
+                -4.488156795501709
+            ],
+            "width": 40.0
+        },
+        {
+            "charge": 0.0,
+            "height": 40.0,
+            "isStatic": false,
+            "mass": 10.0,
+            "pos": [
+                -193.0,
+                -64.0
+            ],
+            "restitution": 0.30000001192092896,
+            "type": "BOX",
+            "vel": [
+                0.0,
+                -4.488156795501709
+            ],
+            "width": 40.0
+        },
+        {
+            "charge": 0.0,
+            "height": 40.0,
+            "isStatic": false,
+            "mass": 10.0,
+            "pos": [
+                -165.0,
+                -15.0
+            ],
+            "restitution": 0.30000001192092896,
+            "type": "BOX",
+            "vel": [
+                0.0,
+                -4.488156795501709
+            ],
+            "width": 40.0
+        },
+        {
+            "charge": 0.0,
+            "height": 40.0,
+            "isStatic": false,
+            "mass": 10.0,
+            "pos": [
+                -322.0,
+                -8.0
+            ],
+            "restitution": 0.30000001192092896,
+            "type": "BOX",
+            "vel": [
+                0.0,
+                -4.488156795501709
+            ],
+            "width": 40.0
+        },
+        {
+            "charge": 0.0,
+            "height": 40.0,
+            "isStatic": false,
+            "mass": 10.0,
+            "pos": [
+                -270.0,
+                -9.0
+            ],
+            "restitution": 0.30000001192092896,
+            "type": "BOX",
+            "vel": [
+                0.0,
+                -4.488156795501709
+            ],
+            "width": 40.0
+        },
+        {
+            "charge": 0.0,
+            "height": 40.0,
+            "isStatic": false,
+            "mass": 10.0,
+            "pos": [
+                -219.0,
+                -11.0
+            ],
+            "restitution": 0.30000001192092896,
+            "type": "BOX",
+            "vel": [
+                0.0,
+                -4.488156795501709
+            ],
+            "width": 40.0
+        },
+        {
+            "charge": 0.0,
+            "height": 40.0,
+            "isStatic": false,
+            "mass": 10.0,
+            "pos": [
+                -243.0,
+                41.0
+            ],
+            "restitution": 0.30000001192092896,
+            "type": "BOX",
+            "vel": [
+                0.0,
+                -4.488156795501709
+            ],
+            "width": 40.0
+        },
+        {
+            "charge": 0.0,
+            "height": 40.0,
+            "isStatic": false,
+            "mass": 10.0,
+            "pos": [
+                -293.0,
+                42.0
+            ],
+            "restitution": 0.30000001192092896,
+            "type": "BOX",
+            "vel": [
+                0.0,
+                -4.488156795501709
+            ],
+            "width": 40.0
+        },
+        {
+            "charge": 0.0,
+            "height": 40.0,
+            "isStatic": false,
+            "mass": 10.0,
+            "pos": [
+                -188.0,
+                40.0
+            ],
+            "restitution": 0.30000001192092896,
+            "type": "BOX",
+            "vel": [
+                0.0,
+                -4.488156795501709
+            ],
+            "width": 40.0
+        },
+        {
+            "charge": 0.0,
+            "height": 40.0,
+            "isStatic": false,
+            "mass": 10.0,
+            "pos": [
+                -216.0,
+                95.0
+            ],
+            "restitution": 0.30000001192092896,
+            "type": "BOX",
+            "vel": [
+                0.0,
+                -4.488156795501709
+            ],
+            "width": 40.0
+        },
+        {
+            "charge": 0.0,
+            "height": 40.0,
+            "isStatic": false,
+            "mass": 10.0,
+            "pos": [
+                -268.0,
+                97.0
+            ],
+            "restitution": 0.30000001192092896,
+            "type": "BOX",
+            "vel": [
+                0.0,
+                -4.488156795501709
+            ],
+            "width": 40.0
+        },
+        {
+            "charge": 0.0,
+            "height": 40.0,
+            "isStatic": false,
+            "mass": 10.0,
+            "pos": [
+                -242.0,
+                147.0
+            ],
+            "restitution": 0.30000001192092896,
+            "type": "BOX",
+            "vel": [
+                0.0,
+                -4.488156795501709
+            ],
+            "width": 40.0
+        },
+        {
+            "charge": 0.0,
+            "isStatic": false,
+            "mass": 100.0,
+            "pos": [
+                243.0,
+                -63.0
+            ],
+            "radius": 20.0,
+            "restitution": 0.800000011920929,
+            "type": "CIRCLE",
+            "vel": [
+                -708.0,
+                -24.0
+            ]
+        },
+        {
+            "charge": 0.0,
+            "isStatic": false,
+            "mass": 100.0,
+            "pos": [
+                221.0,
+                70.0
+            ],
+            "radius": 20.0,
+            "restitution": 0.800000011920929,
+            "type": "CIRCLE",
+            "vel": [
+                -616.0,
+                1.0
+            ]
+        }
+    ],
+    "settings": {
+        "G": 1000.0,
+        "K": 10000.0,
+        "checkBodyCollisions": true,
+        "checkWindowCollisions": true,
+        "renderTrails": false,
+        "renderVelocityVectors": false,
+        "renderWorldBounds": true,
+        "scale": 1.0,
+        "simHeight": 600.0,
+        "simWidth": 1000.0,
+        "useElectrostatics": false,
+        "useGravity": true,
+        "useNBodyGravity": false
+    }
+}

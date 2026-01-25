@@ -11267,8 +11267,12 @@
     ],
     "settings": {
         "G": 1000.0,
+        "K": 10000.0,
         "checkBodyCollisions": true,
         "checkWindowCollisions": true,
+        "renderTrails": false,
+        "renderVelocityVectors": false,
+        "renderWorldBounds": false,
         "scale": 0.3186306953430176,
         "simHeight": 2000.0,
         "simWidth": 2500.0,
