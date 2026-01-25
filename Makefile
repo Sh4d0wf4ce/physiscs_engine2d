@@ -38,7 +38,6 @@ all: $(TARGET)
 
 $(TARGET): $(ALL_OBJECTS) | $(BIN_DIR)
 	$(CXX) $(ALL_OBJECTS) -o $@ $(LIBS)
-	@echo Kopiowanie bibliotek DLL...
 	@$(COPY_CMD)
 	@echo Build successful! Run: $(TARGET)
 
