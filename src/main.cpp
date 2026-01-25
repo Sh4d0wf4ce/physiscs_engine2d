@@ -66,8 +66,8 @@ int main() {
     char saveFileName[64] = "scene1";
     
 
-    // --- Default Scene Setup (Solar System Demo) ---
-    // Creating initial objects programmatically for demonstration
+    // --- Default Scene Setup (Solar System Demo - full version in example scenes) ---
+    // Creating initial setup for demonstration
     Body* sun = new Body({0, 0}, {0, 0}, 10000, 0.0f, 0, new CircleCollider(30));
     Body* planet1 = new Body({200, 0}, {0, 223.61f}, 1, 0.0f, 0, new CircleCollider(10));
     Body* planet2 = new Body({-100, 0}, {0, -316.23f}, 1, 0.0f, 0, new CircleCollider(10));
@@ -406,7 +406,7 @@ int main() {
 
                 if(ImGui::Button("Load", ImVec2(-1, 0))){
                     if(selectedFileIndex >= 0 && selectedFileIndex < (int)files.size()){
-                        std::string path = "saves/" + files[selectedFileIndex];
+                        std::string path = "scenes/" + files[selectedFileIndex];
                         Serializer::loadFromFile(path, engine);
                         renderer.setCameraPos({0,0});
                         selectedBodies.clear();
