@@ -10,8 +10,8 @@ public:
     float x, y; 
 
     /// @brief Default constructor.
-    /// @param x 
-    /// @param y 
+    /// @param x X coordinate.
+    /// @param y Y coordinate.
     Vector2d(float x=0, float y=0): x(x), y(y) {}
 
     /// @brief Addition operator.

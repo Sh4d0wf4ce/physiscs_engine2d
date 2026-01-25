@@ -14,7 +14,7 @@ var class_body =
     [ "charge", "class_body.html#ad9acfba42fd67932d8297f0d81bb743e", null ],
     [ "collider", "class_body.html#aec74c5f37da3d29c5ee1a4b608bcd2f8", null ],
     [ "force", "class_body.html#a0ad4721f02cab6e76846213609431e78", null ],
-    [ "maxTrailLength", "class_body.html#a29d30daf054403af5bcf40b8965bdb00", null ],
+    [ "maxTrailLength", "class_body.html#a88149ef506ed7f0bb759d57f3d9c8ed9", null ],
     [ "pos", "class_body.html#ad623452d053a36116bf53e6d717a3742", null ],
     [ "restitution", "class_body.html#af5e1e5e3a1ac10c4ca5ad9c5018ea727", null ],
     [ "trail", "class_body.html#a249f65ce3beae05d65098607828e3748", null ],

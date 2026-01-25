@@ -41,7 +41,7 @@ int main() {
 
     sf::RenderWindow window(sf::VideoMode({w, h}), "Physics Engine 2D", sf::Style::Default);
 
-    window.setPosition({(desktop.size.x - w)/2, (desktop.size.y - h)/2});
+    window.setPosition({(int)(desktop.size.x - w)/2, (int)(desktop.size.y - h)/2});
     window.setFramerateLimit(60);
 
     // Initialize ImGui-SFML
@@ -58,12 +58,12 @@ int main() {
 
     Renderer renderer(window);
 
-    // Ensure saves directory exists
-    if(!fs::exists("saves")){
-        fs::create_directory("saves");
+    // Ensure scenes directory exists
+    if(!fs::exists("scenes")){
+        fs::create_directory("scenes");
     }
 
-    char saveFileName[64] = "save1";
+    char saveFileName[64] = "scene1";
     
 
     // --- Default Scene Setup (Solar System Demo) ---
@@ -104,7 +104,7 @@ int main() {
 
             // Handle window resizing
             if(const auto* resized = event->getIf<sf::Event::Resized>()){
-                sf::FloatRect visibleArea({0, 0}, {resized->size.x, resized->size.y});
+                sf::FloatRect visibleArea({0, 0}, {(float)resized->size.x, (float)resized->size.y});
                 window.setView(sf::View(visibleArea));
             }
 
@@ -144,7 +144,7 @@ int main() {
                             groupCenter = groupCenter / float(clipboard.size());
 
                             sf::Vector2i mouseScreenPos = sf::Mouse::getPosition(window);
-                            Vector2d mousePos = renderer.screenToReal({mouseScreenPos.x, mouseScreenPos.y});
+                            Vector2d mousePos = renderer.screenToReal({(float)mouseScreenPos.x, (float)mouseScreenPos.y});
                             Vector2d offset = mousePos - groupCenter;
 
                             selectedBodies.clear();
@@ -163,7 +163,7 @@ int main() {
                 }
                 // --- Mouse handling ---
                 if(const auto& mouseEvent = event->getIf<sf::Event::MouseButtonPressed>()){
-                    Vector2d mousePos = renderer.screenToReal({mouseEvent->position.x, mouseEvent->position.y});
+                    Vector2d mousePos = renderer.screenToReal({(float)mouseEvent->position.x, (float)mouseEvent->position.y});
                     Body* clickedBody = engine.findBodyAt(mousePos);
                     lastMousePos = mouseEvent->position;
                     
@@ -227,7 +227,7 @@ int main() {
 
                 // Mouse release logic
                 if(const auto& mouseEvent = event->getIf<sf::Event::MouseButtonReleased>()){
-                    Vector2d mousePos = renderer.screenToReal({mouseEvent->position.x, mouseEvent->position.y});
+                    Vector2d mousePos = renderer.screenToReal({(float)mouseEvent->position.x, (float)mouseEvent->position.y});
                     if(mouseEvent->button == sf::Mouse::Button::Left){
                         if(isSelectingBox){
                             // Select all bodies within the selection box
@@ -269,7 +269,7 @@ int main() {
         ImVec2 workSize = viewport->WorkSize;
         
         float controlPanelWidth = 320.0f;
-        float inspectorWidth = 300.0f;
+        float inspectorWidth = 320.0f;
         float inspectorHeight = 260.0f;
         float padding = 10.0f;
 
@@ -317,26 +317,29 @@ int main() {
             // Physics settings
             if (ImGui::CollapsingHeader("Physics Rules", ImGuiTreeNodeFlags_DefaultOpen)) {
                 ImGui::Checkbox("Check Body Collisions", &Config::useBodiesCollision);
+                ImGui::SameLine(); HelpMarker("If disabled, objects will pass through each other.");
+
                 ImGui::Checkbox("Check Wall Collisions", &Config::useWindowCollision);
+                ImGui::SameLine(); HelpMarker("If disabled, objects won't be restricted by simulation boundaries.");
                 
                 ImGui::Separator();
                 
                 ImGui::Checkbox("Global Gravity (Down)", &Config::useGravity);
-                ImGui::SameLine(); HelpMarker("Standard gravity pulling objects down (F = m*g)");
+                ImGui::SameLine(); HelpMarker("Constant downward force (F = m*g).");
                 
                 if (Config::useGravity) {
                     ImGui::DragFloat("Gravity", &Config::gravity, 0.5f, -200.0f, 200.0f, "%.2f");
                 }
 
                 ImGui::Checkbox("N-Body Gravity", &Config::useNBodyGravity);
-                ImGui::SameLine(); HelpMarker("Orbital mechanics. Every object attracts every other object.");
+                ImGui::SameLine(); HelpMarker("Gravitational attraction between all objects based on their masses.");
 
                 if (Config::useNBodyGravity) {
                     ImGui::DragFloat("G Constant", &Config::G, 10.0f, 1.0f, 10000.0f, "%.0f");
                 }
                 
                 ImGui::Checkbox("Electrostatics", &Config::useElectrostatics);
-                ImGui::SameLine(); HelpMarker("Coulomb's Law. Objects need 'charge' to interact.");
+                ImGui::SameLine(); HelpMarker("Coulomb's Law. Objects with charge interact.\nBodies with opposite charges attract, while those with the same charge repel.");
 
                 if (Config::useElectrostatics) {
                     ImGui::DragFloat("Coulomb K", &Config::K, 100.0f, 0.0f, 100000.0f); 
@@ -346,9 +349,11 @@ int main() {
             // World and view settings
             if (ImGui::CollapsingHeader("World & View", ImGuiTreeNodeFlags_DefaultOpen)) {
                 ImGui::Text("Camera Zoom:");
+                ImGui::SameLine(); HelpMarker("Mouse Wheel");
                 ImGui::SliderFloat("##zoom", &Config::scale, 0.1f, 100.0f, "%.1f px/m", ImGuiSliderFlags_Logarithmic);
                 
                 ImGui::Text("Simulation Bounds (Meters):");
+                ImGui::SameLine(); HelpMarker("The size of the simulation area. Matters only if Wall Collisions are enabled.");
                 Vector2d bounds = engine.getSimBounds();
                 float size[2] = { bounds.x, bounds.y };
                 if (ImGui::DragFloat2("##bounds", size, 0.5f, 10.0f, 10000.0f)) {
@@ -367,9 +372,10 @@ int main() {
                 ImGui::InputText(".json", saveFileName, IM_ARRAYSIZE(saveFileName));
 
                 if(ImGui::Button("Save", ImVec2(-1, 0))){
-                    std::string path = "saves/" + std::string(saveFileName) + ".json";
+                    std::string path = "scenes/" + std::string(saveFileName) + ".json";
                     Serializer::saveToFile(path, engine);
                 }
+                ImGui::SameLine(); HelpMarker("Saves the current scene(bodies and simulation settings) to a file in scenes/ folder.");
 
                 ImGui::Separator();
                 ImGui::Text("Load from file: ");
@@ -377,8 +383,8 @@ int main() {
                 static int selectedFileIndex = -1;
                 std::vector<std::string> files;
 
-                if(fs::exists("saves")){
-                    for(const auto& file: fs::directory_iterator("saves")){
+                if(fs::exists("scenes")){
+                    for(const auto& file: fs::directory_iterator("scenes")){
                         if(file.path().extension() == ".json"){
                             files.push_back(file.path().filename().string());
                         }
@@ -386,7 +392,7 @@ int main() {
                 }
 
                 if(ImGui::BeginListBox("##files", ImVec2(-1, 100))){
-                    for(int i = 0; i < files.size(); i++){
+                    for(int i = 0; i < (int)files.size(); i++){
                         const bool isSelected = (selectedFileIndex == i);
                         if(ImGui::Selectable(files[i].c_str(), isSelected)){
                             selectedFileIndex = i;
@@ -399,7 +405,7 @@ int main() {
                 }
 
                 if(ImGui::Button("Load", ImVec2(-1, 0))){
-                    if(selectedFileIndex >= 0 && selectedFileIndex < files.size()){
+                    if(selectedFileIndex >= 0 && selectedFileIndex < (int)files.size()){
                         std::string path = "saves/" + files[selectedFileIndex];
                         Serializer::loadFromFile(path, engine);
                         renderer.setCameraPos({0,0});
@@ -433,13 +439,17 @@ int main() {
                 ImGui::InputFloat2("Velocity (m/s)", newItemVel);
 
                 ImGui::Checkbox("Is Static", &newItemStatic);
+                ImGui::SameLine(); HelpMarker("Static objects have infinite mass (inverse of mass is 0) and cannot be moved by forces.");
 
                 if (newItemStatic) ImGui::BeginDisabled();
                 ImGui::InputFloat("Mass", &newItemMass);
                 if (newItemStatic) ImGui::EndDisabled();
 
                 ImGui::SliderFloat("Bounciness", &newItemRestitution, 0.0f, 1.0f);
+                ImGui::SameLine(); HelpMarker("Restitution coefficient.\n1.0 = Perfectly Elastic (Bounce)\n0.0 = Inelastic (No Bounce)");
+
                 ImGui::InputFloat("Charge", &newItemCharge);
+                ImGui::SameLine(); HelpMarker("For electrostatics interactions. Accepts positive and negative charge value.");
 
                 if (newItemType == 0) {
                     ImGui::InputFloat("Radius", &newItemSize[0]);
@@ -496,7 +506,7 @@ int main() {
                 const std::vector<Body*>& bodies = engine.getBodies();
                 Body* selectedBody = selectedBodies[0];
                 int currentIndex = -1;
-                for(int i = 0; i < bodies.size(); i++){
+                for(unsigned int i = 0; i < bodies.size(); i++){
                     if(bodies[i] == selectedBody){
                         currentIndex = i;
                         break;
@@ -518,7 +528,7 @@ int main() {
                     
                     if(ImGui::ArrowButton("##right", ImGuiDir_Right)){
                         currentIndex++;
-                        if(currentIndex >= bodies.size()) currentIndex = 0;
+                        if(currentIndex >= (int)bodies.size()) currentIndex = 0;
                         selectedBodies[0] = bodies[currentIndex];
                         selectedBody = bodies[currentIndex];
                     }
@@ -534,6 +544,7 @@ int main() {
                     if (ImGui::Button("Follow (F)")) isCameraFollowing = true;
                 }
 
+                ImGui::SameLine(); HelpMarker("Lock camera to this object");
                 ImGui::Separator();
 
                 // Property editors
@@ -551,6 +562,7 @@ int main() {
                 if (ImGui::Checkbox("Static Body", &isStatic)) {
                     selectedBody->setStatic(isStatic);
                 }
+                ImGui::SameLine(); HelpMarker("Static objects have infinite mass (inverse of mass is 0) and cannot be moved by forces.");
 
                 if (isStatic) {
                     ImGui::BeginDisabled();
@@ -570,12 +582,14 @@ int main() {
                 if(ImGui::DragFloat("Charge", &charge, 1.0f, 0.0f, 0.0f)){
                     selectedBody->charge = charge;
                 }
+                ImGui::SameLine(); HelpMarker("For electrostatics interactions. Accepts positive and negative charge value.");
 
                 float restitution = selectedBody->restitution;
                 if (ImGui::SliderFloat("Bounciness", &restitution, 0.0f, 1.0f)){
                     selectedBody->restitution = restitution;
                 }
                 
+                ImGui::SameLine(); HelpMarker("Restitution coefficient.\n1.0 = Perfectly Elastic (Bounce)\n0.0 = Inelastic (No Bounce)");
                 ImGui::Separator();
 
                 // Shape-specific properties
@@ -612,6 +626,8 @@ int main() {
                 ImGui::Separator();
 
                 // Batch property editors
+                ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.60f);
+
                 bool allStatic = true;
                 for(auto* b : selectedBodies) if(!b->isStatic()) allStatic = false;
 
@@ -666,6 +682,7 @@ int main() {
                     }
                 }
                 
+                ImGui::PopItemWidth();
                 ImGui::Separator();
                 
                 if (ImGui::Button("Delete All Selected", ImVec2(-1, 0))) {
@@ -718,12 +735,12 @@ int main() {
         }
 
         sf::Vector2i mouse = sf::Mouse::getPosition(window);
-        Vector2d mousePos = renderer.screenToReal({mouse.x, mouse.y});
+        Vector2d mousePos = renderer.screenToReal({(float)mouse.x, (float)mouse.y});
 
         // Mouse dragging logic
         if(mode == AppMode::EDITOR) {
             if(isDragging && !selectedBodies.empty()){
-                Vector2d prevMouseWorld = renderer.screenToReal({lastMousePos.x, lastMousePos.y});
+                Vector2d prevMouseWorld = renderer.screenToReal({(float)lastMousePos.x, (float)lastMousePos.y});
                 Vector2d delta = mousePos - prevMouseWorld;
 
                 for(Body* b: selectedBodies) {

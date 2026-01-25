@@ -35,8 +35,8 @@ void PhysicsEngine::update(float dt){
 void PhysicsEngine::applyNBodyForces(){
     if(!Config::useNBodyGravity && !Config::useElectrostatics) return;
 
-    for(int i = 0; i < bodies.size(); i++){
-        for(int j = i+1; j < bodies.size(); j++){
+    for(unsigned int i = 0; i < bodies.size(); i++){
+        for(unsigned int j = i+1; j < bodies.size(); j++){
             Body* b1 = bodies[i];
             Body* b2 = bodies[j];
 

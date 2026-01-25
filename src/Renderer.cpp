@@ -108,7 +108,7 @@ void Renderer::drawTrail(const Body& body){
     if(body.trail.size() < 2) return;
     sf::VertexArray trail(sf::PrimitiveType::LineStrip, body.trail.size());
 
-    for(int i = 0; i < body.trail.size(); i++){
+    for(unsigned int i = 0; i < body.trail.size(); i++){
         Vector2d screenPos = realToScreen(body.trail[i]);
         trail[i].position = sf::Vector2f(screenPos.x, screenPos.y);
         

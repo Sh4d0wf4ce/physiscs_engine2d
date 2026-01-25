@@ -1,8 +1,0 @@
-- .vscode sprawdzić co tam jest i po co
-- naprawić gitignore
-- makefile usunąć komentarze
-- warningi przy kompilacji naprawic
-- poprawić wszędzie na 0.0f
-- dodanie przykładowych scen
-- te opisy z question markami (poddodawac/pozmieniać/pousuwać)
-- zmienić folder saves na scenes

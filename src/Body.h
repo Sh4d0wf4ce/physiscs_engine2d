@@ -38,7 +38,7 @@ public:
     std::deque<Vector2d> trail = std::deque<Vector2d>();
 
     /// @brief Maximum length of the trail.
-    int maxTrailLength = 100;
+    unsigned int maxTrailLength = 100;
 
     /// @brief Counter to control trail update frequency.
     int trailcounter = 0;
