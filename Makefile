@@ -21,33 +21,32 @@ ifeq ($(OS),Windows_NT)
     # === KONFIGURACJA WINDOWS ===
     TARGET_NAME := app.exe
     
-    # Ścieżki do Twoich bibliotek w folderze lib/
     SFML_PATH := lib/SFML
     INCLUDES  := -Isrc -I$(SFML_PATH)/include -I$(IMGUI_PATH) -I$(JSON_PATH)
     LIBS      := -L$(SFML_PATH)/lib -lsfml-graphics -lsfml-window -lsfml-system -lopengl32 -lwinmm -lgdi32
 
     # Komendy systemowe (Windows)
-    MKDIR     := mkdir
-    RM        := del /Q /S
+    # Używamy "if not exist", żeby nie krzyczał błędów jeśli folder istnieje
+    MKDIR_OBJ = if not exist $(OBJ_DIR) mkdir $(OBJ_DIR)
+    MKDIR_BIN = if not exist $(BIN_DIR) mkdir $(BIN_DIR)
+    RM        = del /Q /S
     FIX_PATH  = $(subst /,\,$1)
 
-    # Kopiowanie DLL (Tylko na Windowsie)
     SFML_DLLS := $(wildcard $(SFML_PATH)/bin/*.dll)
     COPY_CMD  = xcopy /y /i "$(call FIX_PATH,$(SFML_PATH)/bin/*.dll)" "$(call FIX_PATH,$(BIN_DIR))" > nul 2>&1
 else
     # === KONFIGURACJA LINUX / MACOS ===
     TARGET_NAME := app
     
-    # Na Linuxie używamy systemowego SFML (zainstalowanego przez apt/pacman)
-    # Nie linkujemy do lib/SFML, bo tam są pliki windowsowe!
     INCLUDES  := -Isrc -I$(IMGUI_PATH) -I$(JSON_PATH)
     LIBS      := -lsfml-graphics -lsfml-window -lsfml-system -lGL
 
     # Komendy systemowe (Unix)
-    MKDIR     := mkdir -p
-    RM        := rm -rf
+    # mkdir -p tworzy folder tylko jeśli go nie ma (bez błędów)
+    MKDIR_OBJ = mkdir -p $(OBJ_DIR)
+    MKDIR_BIN = mkdir -p $(BIN_DIR)
+    RM        = rm -rf
     
-    # Na Linuxie nie kopiujemy DLL-ek
     COPY_CMD  = echo "Linux detected: Skipping DLL copy."
 endif
 
@@ -72,12 +71,12 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
 $(OBJ_DIR)/%.o: $(IMGUI_PATH)/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
-# Tworzenie folderów
+# Tworzenie folderów (Teraz używa dedykowanych komend dla OS)
 $(OBJ_DIR):
-	@$(MKDIR) $(call FIX_PATH,$(OBJ_DIR)) 2> nul || true
+	@$(MKDIR_OBJ)
 
 $(BIN_DIR):
-	@$(MKDIR) $(call FIX_PATH,$(BIN_DIR)) 2> nul || true
+	@$(MKDIR_BIN)
 
 # Generowanie dokumentacji
 docs:
