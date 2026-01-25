@@ -38,16 +38,17 @@ else
     # === KONFIGURACJA LINUX / MACOS ===
     TARGET_NAME := app
     
-    INCLUDES  := -Isrc -I$(IMGUI_PATH) -I$(JSON_PATH)
-    LIBS      := -lsfml-graphics -lsfml-window -lsfml-system -lGL
+    # Dodajemy -I/usr/local/include (dla nagłówków)
+    INCLUDES  := -Isrc -I$(IMGUI_PATH) -I$(JSON_PATH) -I/usr/local/include
+    
+    # Dodajemy -L/usr/local/lib (dla plików .so)
+    LIBS      := -L/usr/local/lib -lsfml-graphics -lsfml-window -lsfml-system -lGL
 
-    # Komendy systemowe (Unix)
-    # mkdir -p tworzy folder tylko jeśli go nie ma (bez błędów)
     MKDIR_OBJ = mkdir -p $(OBJ_DIR)
     MKDIR_BIN = mkdir -p $(BIN_DIR)
     RM        = rm -rf
     
-    COPY_CMD  = echo "Linux detected: Skipping DLL copy."
+    COPY_CMD  = echo "Linux detected: SFML 3.0.2 installed globally."
 endif
 
 TARGET := $(BIN_DIR)/$(TARGET_NAME)
