@@ -2,6 +2,8 @@
 #define RENDERER_H
 
 #include <SFML/Graphics.hpp>
+#include <array>
+#include <cstdint>
 #include "Body.h"
 #include "PhysicsEngine.h"
 #include "Config.h"

@@ -136,7 +136,7 @@ void Renderer::drawSelection(const Body& body){
         circleShape.setOutlineColor(Config::COLOR_SELECTION);
         circleShape.setOutlineThickness(2.0f);
         window.draw(circleShape);
-        
+
     }else if(col->shapeType == BOX){
         BoxCollider* box = static_cast<BoxCollider*>(col);
         sf::RectangleShape rectShape(sf::Vector2f((box->width + 2*padding) * Config::scale, (box->height + 2*padding) * Config::scale));
@@ -171,7 +171,7 @@ void Renderer::drawVector(const Vector2d& start, const Vector2d& vector){
     Vector2d startScreen = realToScreen(start);
     Vector2d endScreen = realToScreen(end);
 
-    std::array line =
+    std::array<sf::Vertex, 2> line =
     {
         sf::Vertex{{startScreen.x, startScreen.y}, Config::COLOR_VECTOR},
         sf::Vertex{{endScreen.x, endScreen.y}, Config::COLOR_VECTOR}
